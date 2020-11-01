@@ -23,11 +23,13 @@ def getEvent(eventId):
     name = data["title"]
     description = data["description"]
     eventTime = data["startTime"]
+    regex = re.search(r"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z", eventTime)
+    eventTime = datetime.datetime(int(regex.group(1)), int(regex.group(2)), int(regex.group(3)), int(regex.group(4)), int(regex.group(5)))
     eventLocation = data["location"]
     try:
         rawRegistrationOpen = data["pools"][0]["activationDate"]
-        regex = re.search("(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z", rawRegistrationOpen)
-        registrationOpen = datetime.datetime(int(regex.group(1)), int(regex.group(2)), int(regex.group(3)), int(regex.group(4)), int(regex.group(5)), int(regex.group(6)))
+        regex = re.search(r"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z", rawRegistrationOpen)
+        registrationOpen = datetime.datetime(int(regex.group(1)), int(regex.group(2)), int(regex.group(3)), int(regex.group(4)), int(regex.group(5)))
     except IndexError:
         registrationOpen = None
     return {
@@ -35,7 +37,8 @@ def getEvent(eventId):
         "description": description,
         "eventTime": eventTime,
         "eventLocation": eventLocation,
-        "regsitrationOpen": registrationOpen
+        "regsitrationOpen": registrationOpen,
+        "url": "https://abakus.no/events/"+str(eventId)
     }
 
 
