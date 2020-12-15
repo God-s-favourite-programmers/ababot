@@ -7,9 +7,9 @@ Discord bot for abakus stuff
 
 Should be able to write
 
-``` python
+``` dockerfile
 
-From areskiko/ababot
+FROM areskiko/ababot
 CMD ["python3", "src/discordBot.py"]
 
 ```
