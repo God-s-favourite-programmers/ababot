@@ -1,11 +1,10 @@
+import os
 import json
 import asyncio
 import discord
 from discord.ext import commands
 import eventParser
 
-with open(".env") as f:
-    token = json.load(f)["bot-token"]
 client = commands.Bot(command_prefix = "!")
 
 @client.event
@@ -39,6 +38,12 @@ async def start(ctx):
 
 
 
-
-
-client.run(token)
+if __name__ == "__main__":
+    if os.path.isfile("token.txt"):
+        with open("token.txt", "r") as f:
+            token = f.read()
+        client.run(token)
+    else:
+        with open("token.txt", "w") as f:
+            f.write("TOKEN")
+        print("Replace TOKEN in token.txt file")
