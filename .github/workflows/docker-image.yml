@@ -3,8 +3,6 @@ name: Docker Image CI
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
 
@@ -15,4 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag ababot:$(date +%s)
+      run: docker build . --file Dockerfile --tag areskiko/ababot:$(date +%s)
+      
+    - name: Publish Docker image
+      run: docker push areskiko/ababot
