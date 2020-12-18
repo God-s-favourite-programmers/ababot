@@ -42,7 +42,6 @@ if __name__ == "__main__":
     if os.path.isfile("token.txt"):
         with open("token.txt", "r") as f:
             token = f.read()
-        print(token)
         client.run(token)
     else:
         with open("token.txt", "w") as f:
