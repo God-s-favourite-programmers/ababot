@@ -15,5 +15,11 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag areskiko/ababot:$(date +%s)
       
-    - name: Publish Docker image
-      run: docker push areskiko/ababot
+      
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish the Docker image
+        run: docker push areskiko/ababot
