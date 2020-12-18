@@ -1,3 +1,4 @@
 token.txt
 Pipfile
 Pipfile.lock
+*.pyc
