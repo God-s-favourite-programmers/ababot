@@ -36,6 +36,23 @@ async def start(ctx):
     channel = discord.utils.get(client.get_all_channels(), guild=guild, name='ababot').id
     client.loop.create_task(poster(channel))
 
+    
+async def reminder(channelId):
+    await client.wait_until_ready()
+    channel = client.get_channel(channelId)
+    while True:
+        messages = await channel.history(limit=123).flatten()
+        for message in messages:
+            #Use regex to fill values
+            startTime = 0
+            signupTime = 0
+            eventName = ""
+            currentTime = datetime.datetime.now()
+            delta = datetime.timedelta(minutes=10)
+            if currentTime+delta == signupTime:
+                pass
+                #For user that has reacted
+                    #Message user
 
 
 if __name__ == "__main__":
