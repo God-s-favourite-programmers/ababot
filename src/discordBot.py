@@ -1,5 +1,7 @@
 import os
 import json
+import datetime
+import re
 import asyncio
 import discord
 from discord.ext import commands
@@ -27,33 +29,70 @@ async def poster(channelId):
                 await asyncio.sleep(5)
             else:
                 events.remove(event)
-            
 
+    
+async def reminder(channelId):
+    await client.wait_until_ready()
+    channel = client.get_channel(channelId)
+
+    #region Send dummy event
+    currentTime = datetime.datetime.now()
+    delta = datetime.timedelta(minutes=11)
+    signupTime = currentTime+delta
+    startTime = signupTime+delta
+    eventName = "Test event"
+    eventDescription = "Description of event"
+    eventLocation = "Discord"
+    url = "https://github.com/Areskiko/ababot"
+    msg = f"""> **{eventName}**\n{eventDescription}\nBegins on {startTime} in {eventLocation}\nRegistrations begin on {datetime.datetime.strftime(signupTime, '%Y-%m-%d %H:%M:%S')}\n{url}"""
+    #await channel.send(msg)
+    #endregion
+    
+    while True:
+        messages = await channel.history(limit=123).flatten()
+        for message in messages:
+            if message.author == client.user:
+                print("\n\n\n-------------------\n")
+                pattern = """> \*\*(.*?)\*\*
+(.*?)
+Begins on (.*?) in (.*?)
+Registrations begin on (.*?)
+(.*?)"""
+                messageSearch = re.search(pattern, message.content)
+                #Use regex to fill values
+                startTime = messageSearch.group(3)
+                signupTime = messageSearch.group(5)
+                if signupTime == "None":
+                    pass
+                else:
+                    eventName = messageSearch.group(1)
+                    print(eventName)
+                    print(signupTime)
+                    signupTime = datetime.datetime.strptime(signupTime, '%Y-%m-%d %H:%M:%S')
+                    currentTime = datetime.datetime.now()
+                    delta = datetime.timedelta(minutes=10)
+                    print(currentTime+delta)
+                    print(signupTime)
+                    if currentTime+delta >= signupTime:
+                        msg = f"""The event {eventName} opens its registration in less than ten minutes at {signupTime}
+The event itself starts at {startTime}"""
+                        for reaction in message.reactions:
+                            async for user in reaction.users():
+                                if user.dm_channel:
+                                    pass
+                                else:
+                                    await user.create_dm()
+                                alerts = await user.dm_channel.history(limit=123).flatten()
+                                alerts = [x.content for x in alerts]
+                                if msg not in alerts:
+                                    await user.send(msg)
 
 @client.command(aliases=['begin'])
 async def start(ctx):
     guild = ctx.message.guild
     channel = discord.utils.get(client.get_all_channels(), guild=guild, name='ababot').id
     client.loop.create_task(poster(channel))
-
-    
-async def reminder(channelId):
-    await client.wait_until_ready()
-    channel = client.get_channel(channelId)
-    while True:
-        messages = await channel.history(limit=123).flatten()
-        for message in messages:
-            #Use regex to fill values
-            startTime = 0
-            signupTime = 0
-            eventName = ""
-            currentTime = datetime.datetime.now()
-            delta = datetime.timedelta(minutes=10)
-            if currentTime+delta == signupTime:
-                pass
-                #For user that has reacted
-                    #Message user
-
+    client.loop.create_task(reminder(channel))
 
 if __name__ == "__main__":
     if os.path.isfile("token.txt"):
