@@ -16,8 +16,6 @@ async def on_ready():
         channelId = discord.utils.get(client.get_all_channels(), guild=guild, name='ababot').id
         client.loop.create_task(poster(channelId))
         client.loop.create_task(reminder(channelId))
-        channelCtx = client.get_channel(channelId)
-        await channelCtx.send("I have restarted!")
 
 
 async def poster(channelId):
