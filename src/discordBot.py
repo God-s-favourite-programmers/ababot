@@ -98,12 +98,12 @@ The event itself starts at {startTime}"""
 if __name__ == "__main__":
     if os.path.isfile("token.txt"):
         print("Found token.txt, attempting to use saved token")
-        with open("token.txt", "r") as f:
+        with open("/token/token.txt", "r") as f:
             token = f.read()
     else:
         print("token.txt file not found. Run the container with a volume, to avoid this problem in the future")
         token = input("Provide token manually: ")
-        with open("token.txt", "w") as f:
+        with open("/token/token.txt", "w") as f:
             f.write(token)
         print("Token written to token.txt, reuse the volume next time to avoid providing the token manually")
     
