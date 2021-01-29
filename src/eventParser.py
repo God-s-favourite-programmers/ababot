@@ -2,18 +2,20 @@ import re
 import json
 import requests
 import datetime
-from bs4 import BeautifulSoup
 
+
+def getDate():
+    today = datetime.datetime.today()
+    formatted = today.strftime("%Y-%m-%d")
+    return formatted
 
 def listEvents():
-    url = "https://abakus.no/events"
-    listPage = requests.get(url).content
-    soup = BeautifulSoup(listPage, "html.parser")
-    events = []
-    for eventCategory in soup.findAll("div", {"class": "EventList__eventGroup--1-Btpkldi0"}):
-        anchors = eventCategory.findAll("a")
-        events.extend([x["href"][-4:] for x in anchors])
-    return events
+    url = f"https://lego.abakus.no/api/v1/events/?date_after={getDate()}"
+    data = requests.get(url).json()
+    id_list = []
+    for event in data["results"]:
+        id_list.append(event["id"])
+    return id_list
 
 
 def getEvent(eventId):
