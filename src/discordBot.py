@@ -96,7 +96,7 @@ The event itself starts at {startTime}"""
                     pass #Parsed Anomalous message and can't find the info it needs
 
 if __name__ == "__main__":
-    if os.path.isfile("token.txt"):
+    if os.path.isfile("/token/token.txt"):
         print("Found token.txt, attempting to use saved token")
         with open("/token/token.txt", "r") as f:
             token = f.read()
@@ -109,4 +109,3 @@ if __name__ == "__main__":
     
 
     client.run(token)
-    
