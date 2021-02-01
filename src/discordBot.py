@@ -49,7 +49,7 @@ async def on_poster_error(ctx, error):
 
 @client.command()
 async def reminder(channelId):
-    logging.info("Poster started")
+    logging.info("Reminder started")
     template = "reminderTemplate.txt"
     channel = client.get_channel(channelId)
     while True:
