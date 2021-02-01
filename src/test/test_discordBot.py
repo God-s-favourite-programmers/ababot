@@ -12,7 +12,7 @@ def testBot():
         
         async def go():
             try:
-                await asyncio.wait_for(client.start(token), timeout=5)
+                await asyncio.wait_for(client.start(token), timeout=15)
             except asyncio.TimeoutError:
                 await client.close()
 
