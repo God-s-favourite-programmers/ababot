@@ -1,0 +1,5 @@
+> \*\*(.*?)\*\*
+(.*?)
+Begins on (.*?) in (.*?)
+Registrations begin on (.*?)
+(.*?)
