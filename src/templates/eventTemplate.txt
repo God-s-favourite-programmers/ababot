@@ -1,0 +1,5 @@
+> **{eventName}**
+{eventDescription}
+Begins on {signupTime} in {eventLocation}
+Registrations begin on {startTime}
+{url}

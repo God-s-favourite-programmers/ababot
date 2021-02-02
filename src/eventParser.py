@@ -4,13 +4,13 @@ import requests
 import datetime
 
 
-def getDate():
+def get_date():
     today = datetime.datetime.today()
     formatted = today.strftime("%Y-%m-%d")
     return formatted
 
-def listEvents():
-    url = f"https://lego.abakus.no/api/v1/events/?date_after={getDate()}"
+def list_events():
+    url = f"https://lego.abakus.no/api/v1/events/?date_after={get_date()}"
     data = requests.get(url).json()
     id_list = []
     for event in data["results"]:
@@ -18,7 +18,7 @@ def listEvents():
     return id_list
 
 
-def getEvent(eventId):
+def get_event(eventId):
     url = "https://lego.abakus.no/api/v1/events/"+str(eventId)
     r = requests.get(url)
     data = json.loads(r.text)
