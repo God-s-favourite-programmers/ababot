@@ -7,7 +7,7 @@ from discord.ext import commands, tasks
 import eventParser
 from helperFunctions import get_event_properties, generate_message, get_dm_history
 
-logging.basicConfig(filemode="Ababot.log", level=logging.INFO)
+logging.basicConfig(filename='ababot.log', filemode='w', level=logging.INFO)
 client = commands.Bot(command_prefix = "!")
 
 
