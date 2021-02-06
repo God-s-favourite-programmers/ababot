@@ -1,9 +1,10 @@
 import datetime
+import logging
 import re
-
+import os
 
 def generate_message(event, template):
-    with open("./templates/"+template, "r") as f:
+    with open("./src/cogs/abakus/templates/"+template, "r") as f:
         msg = f.read()
     time = datetime.datetime.strftime(event["registrationOpen"], '%Y-%m-%d %H:%M:%S')
     return (msg.format(
@@ -17,7 +18,7 @@ def generate_message(event, template):
 
 
 def get_event_properties(message, template):
-    with open("./templates/"+template, "r") as f:
+    with open("./src/cogs/abakus/templates/"+template, "r") as f:
         pattern = f.read()
     messageSearch = re.search(pattern, message.content)
     if messageSearch:
@@ -38,6 +39,7 @@ def get_event_properties(message, template):
     else:
         event = {"registrationOpen": "None"}
     return event
+
 
 
 async def get_dm_history(user):
