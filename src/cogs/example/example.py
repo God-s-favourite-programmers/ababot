@@ -11,7 +11,7 @@ class Example(commands.Cog):
         self.client = client
         self.name = type(self).__name__
         print(f"Cog {self.name} loaded")
-        logging.info(f"Cog {self.name} loaded")
+        logger.info(f"Cog {self.name} loaded")
     
 
     # Events
