@@ -5,6 +5,7 @@ logging.basicConfig(
     filemode='w',
     level=logging.INFO
     )
+    
 import os
 import datetime
 import asyncio
@@ -24,7 +25,6 @@ if __name__ == "__main__":
     logger.info("Loading cogs")
     cogs = [f.name for f in os.scandir("./src/cogs")]
     for cog in cogs:
-        #if os.path.isfile("./src/cogs/{cog}/{cog}.py"):
         client.load_extension(f"src.cogs.{cog}.{cog}")
     logger.info("Running client")
     client.run(getToken.token)
