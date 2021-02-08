@@ -3,9 +3,9 @@ import re
 
 
 def generate_message(event, template):
-    with open("src/templates/"+template, "r") as f:
+    with open("./templates/"+template, "r") as f:
         msg = f.read()
-    time = datetime.datetime.strftime(event["regsitrationOpen"], '%Y-%m-%d %H:%M:%S')
+    time = datetime.datetime.strftime(event["registrationOpen"], '%Y-%m-%d %H:%M:%S')
     return (msg.format(
         eventName=event['name'],
         eventDescription=event['description'],
@@ -15,8 +15,9 @@ def generate_message(event, template):
         url=event['url']
     ))
 
+
 def get_event_properties(message, template):
-    with open("src/templates/"+template, "r") as f:
+    with open("./templates/"+template, "r") as f:
         pattern = f.read()
     messageSearch = re.search(pattern, message.content)
     if messageSearch:
@@ -27,23 +28,24 @@ def get_event_properties(message, template):
         signupTime = messageSearch.group(5)
         url = messageSearch.group(6)
         event = {
-            "name":name,
-            "description":description,
-            "regsitrationOpen":signupTime,
-            "eventLocation":location,
-            "eventTime":startTime,
-            "url":url
+            "name": name,
+            "description": description,
+            "registrationOpen": datetime.datetime.strptime(signupTime, '%Y-%m-%d %H:%M:%S'),
+            "eventLocation": location,
+            "eventTime": startTime,
+            "url": url
         }
     else:
-        event = {"regsitrationOpen":"None"}
+        event = {"registrationOpen": "None"}
     return event
+
 
 async def get_dm_history(user):
     if user.dm_channel:
         pass
     else:
         await user.create_dm()
-    
+
     history = await user.dm_channel.history(limit=123).flatten()
     history = [x.content for x in history]
     return history
