@@ -1,4 +1,3 @@
 The event {eventName} opens its registration in less than ten minutes at {signupTime}
 The event is described as: {eventDescription}
 The event itself starts at {startTime} and takes place in {eventLocation}
-Here is the url: {url}

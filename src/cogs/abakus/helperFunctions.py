@@ -12,8 +12,7 @@ def generate_message(event, template):
         eventDescription=event['description'],
         signupTime=time,
         eventLocation=event['eventLocation'],
-        startTime=event['eventTime'],
-        url=event['url']
+        startTime=event['eventTime']
     ))
 
 
