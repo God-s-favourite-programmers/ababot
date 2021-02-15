@@ -2,6 +2,8 @@
 import datetime
 import logging
 import asyncio
+import pytz
+localTimezone = pytz.timezone("Europe/Oslo")
 # Discord
 import discord
 from discord.ext import commands, tasks
@@ -55,11 +57,10 @@ class Abakus(commands.Cog):
                 event = get_event_properties(message, regexTemplate)
                 if event["registrationOpen"] != "None":
                     signupTime = event["registrationOpen"]
-                    currentTime = datetime.datetime.now()
+                    currentTime = datetime.datetime.now(tz=localTimezone)
                     delta = datetime.timedelta(minutes=10)
                     if currentTime+delta >= signupTime:
                         msg = generate_message(event, template)
-                        print(msg)
                         for reaction in message.reactions:
                             async for user in reaction.users():
                                 alerts = await get_dm_history(user)
