@@ -1,18 +1,20 @@
 import datetime
-import logging
 import re
-import os
+import pytz
+localTimezone = pytz.timezone("Europe/Oslo")
 
 def generate_message(event, template):
     with open("./src/cogs/abakus/templates/"+template, "r") as f:
         msg = f.read()
     time = datetime.datetime.strftime(event["registrationOpen"], '%Y-%m-%d %H:%M:%S')
+    startTime = datetime.datetime.strftime(event["eventTime"], '%Y-%m-%d %H:%M:%S')
     return (msg.format(
         eventName=event['name'],
         eventDescription=event['description'],
         signupTime=time,
         eventLocation=event['eventLocation'],
-        startTime=event['eventTime']
+        startTime=startTime,
+        url=event["url"]
     ))
 
 
@@ -24,13 +26,15 @@ def get_event_properties(message, template):
         name = messageSearch.group(1)
         description = messageSearch.group(2)
         startTime = messageSearch.group(3)
+        startTime = localTimezone.localize(datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S'))
         location = messageSearch.group(4)
         signupTime = messageSearch.group(5)
+        signupTime = localTimezone.localize(datetime.datetime.strptime(signupTime, '%Y-%m-%d %H:%M:%S'))
         url = messageSearch.group(6)
         event = {
             "name": name,
             "description": description,
-            "registrationOpen": datetime.datetime.strptime(signupTime, '%Y-%m-%d %H:%M:%S'),
+            "registrationOpen": signupTime,
             "eventLocation": location,
             "eventTime": startTime,
             "url": url

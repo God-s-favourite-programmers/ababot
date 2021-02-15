@@ -2,7 +2,8 @@ import re
 import json
 import requests
 import datetime
-
+import pytz
+localTimezone = pytz.timezone("Europe/Oslo")
 
 def get_date():
     today = datetime.datetime.today()
@@ -30,6 +31,7 @@ def get_event(eventId):
         r"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z", eventTime)
     eventTime = datetime.datetime(int(regex.group(1)), int(regex.group(2)), int(
         regex.group(3)), int(regex.group(4)), int(regex.group(5)))
+    eventTime = pytz.utc.localize(eventTime, is_dst=None).astimezone(localTimezone)
     eventLocation = data["location"]
     try:
         rawRegistrationOpen = data["pools"][0]["activationDate"]
@@ -37,6 +39,7 @@ def get_event(eventId):
             r"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z", rawRegistrationOpen)
         registrationOpen = datetime.datetime(int(regex.group(1)), int(
             regex.group(2)), int(regex.group(3)), int(regex.group(4)), int(regex.group(5)))
+        registrationOpen = pytz.utc.localize(registrationOpen, is_dst=None).astimezone(localTimezone)
     except IndexError:
         registrationOpen = None
     return {
