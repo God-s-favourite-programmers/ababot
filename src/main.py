@@ -7,7 +7,6 @@ logging.basicConfig(
     )
     
 import os
-import datetime
 import asyncio
 import discord
 from discord.ext import commands
@@ -21,10 +20,29 @@ async def on_ready():
     print("AbaBot is ready")
     logger.info("Bot started")
 
-if __name__ == "__main__":
+@client.command()
+async def reload(ctx):
+    logger.info("Reloading all cogs")
+    async with ctx.typing():
+        unload_all_cogs()
+        load_all_cogs()
+    await ctx.send("Reload complete")
+
+def load_all_cogs():
     logger.info("Loading cogs")
     cogs = [f.name for f in os.scandir("./src/cogs")]
     for cog in cogs:
         client.load_extension(f"src.cogs.{cog}.{cog}")
+
+def unload_all_cogs():
+    logger.info("Unloading cogs")
+    cogs = [f.name for f in os.scandir("./src/cogs")]
+    for cog in cogs:
+        client.unload_extension(f"src.cogs.{cog}.{cog}")
+
+
+
+if __name__ == "__main__":
+    load_all_cogs()
     logger.info("Running client")
     client.run(getToken.token)
