@@ -1,4 +1,3 @@
-from json import load
 import logging
 logging.basicConfig(
     filename='/ababot/ababot.log',
@@ -8,7 +7,6 @@ logging.basicConfig(
     )
     
 import os
-import datetime
 import asyncio
 import discord
 from discord.ext import commands
