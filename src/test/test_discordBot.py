@@ -12,13 +12,17 @@ def testBot():
         
         async def go():
             try:
-                await asyncio.wait_for(client.start(token), timeout=15)
+                await asyncio.wait_for(client.start(token), timeout=25)
             except asyncio.TimeoutError:
-                await client.close()
+                pass
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(go())
-        return 0
+        if client.is_running():
+            client.close()
+            return 0
+        else:
+            return 1
     except:
         return 1
 testBot()
