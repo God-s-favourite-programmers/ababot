@@ -2,6 +2,7 @@
 import asyncio
 import datetime
 import logging
+import asyncio
 import pytz
 local_timezone = pytz.timezone("Europe/Oslo")
 # Discord
