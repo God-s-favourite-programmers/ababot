@@ -55,7 +55,12 @@ class Soup(commands.Cog):
 
     @kok.error
     async def kok_error(self, ctx, error):
-        await ctx.send("I don't understand. Did you maybe forget to close you quotes?")
+        logger.error(error)
+        error_as_str:str = str(error)
+        if error_as_str == "Command raised an exception: HTTPException: 413 Payload Too Large (error code: 40005): Request entity too large":
+            await ctx.send("Uh oh, your soup is simply too large, I can't carry this")
+        else:
+            await ctx.send("I don't understand. Did you maybe forget to close you quotes?")
 
 
     @tasks.loop(hours=1)
