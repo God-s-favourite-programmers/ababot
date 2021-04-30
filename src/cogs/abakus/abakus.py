@@ -2,6 +2,7 @@
 import asyncio
 import datetime
 import logging
+from discord.ext.commands.core import is_owner
 import pytz
 local_timezone = pytz.timezone("Europe/Oslo")
 # Discord
@@ -25,8 +26,6 @@ class Abakus(commands.Cog):
         print(f"Cog {self.name} loaded")
         logger.info(f"Cog {self.name} loaded")
 
-
-
     @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.client.guilds[0]
@@ -44,12 +43,23 @@ class Abakus(commands.Cog):
     @commands.command()
     async def restart(self, ctx):
         logger.info("Restarting loops")
-        async with ctx.typing():
-            self.poster.start()
-            self.reminder.start()
-        await ctx.send("Restart complete")
+        try:
+            async with ctx.typing():
+                self.poster.start()
+                self.reminder.start()
+        except Exception as e:
+            raise e
+        if (self.poster.is_running() and self.reminder.is_running()):
+            logger.info("All loops are running")
+            await ctx.send("Restart complete")
+        else:
+            logger.warning("Npt all loops are running")
+            await ctx.send("Not all loops are running")
 
-
+    @restart.error
+    async def restart_error(self, ctx, error):
+        logger.error(error)
+        ctx.send(f"An error ocurred while reloading: {error}")
 
     async def post(self, event_object:event) -> None:
         template = "eventTemplate.txt"
