@@ -1,12 +1,13 @@
 # General
+import asyncio
 import datetime
 import logging
 import asyncio
-from discord import channel
 import pytz
 local_timezone = pytz.timezone("Europe/Oslo")
 # Discord
 import discord
+from discord import channel
 from discord.ext import commands, tasks
 
 # Custom
@@ -126,8 +127,6 @@ class Abakus(commands.Cog):
         print(f"Abakus cog error: {error}")
         await self.channel.send(f"Abakus cog has stopped working due to: {error}")
         logger.error(error)
-        logger.critical("Shutting down")
-        await self.client.close()
 
 def setup(client):
     client.add_cog(Abakus(client))
