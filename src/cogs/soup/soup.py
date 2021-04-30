@@ -63,6 +63,7 @@ class Soup(commands.Cog):
             await ctx.send("I don't understand. Did you maybe forget to close you quotes?")
 
 
+
     @tasks.loop(hours=1)
     async def cleanup(self):
         for message in await self.channel.history(limit=123).flatten():
