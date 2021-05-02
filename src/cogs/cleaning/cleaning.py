@@ -32,8 +32,15 @@ class Cleaning(commands.Cog):
             f"Deploying cleanup to Channel: {self.channelId}")
         self.cleanup.start()
 
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    # Commands
+    @commands.command()
+    @commands.has_role("Los Jefes")
+    async def clear(self, ctx, amount=10):
+        """Delete [amount] of messages."""
+        await ctx.channel.purge(limit=amount)
+
+    @clear.error
+    async def clear_error(self, ctx, error):
         """If error is due to lack of permission, notify the user of their lack of permission. Otherwise warn of error."""
 
         if isinstance(error, commands.errors.CheckFailure):
@@ -42,13 +49,6 @@ class Cleaning(commands.Cog):
             logger.error(error)
             await ctx.send(f"An error ocurred while reloading: {error}")
 
-    # Commands
-    @commands.command()
-    @commands.has_role("Los Jefes")
-    async def clear(self, ctx, amount=10):
-        """Delete [amount] of messages."""
-        ctx.channel.purge(limit=amount)
-
     # Loops
     @tasks.loop(hours=1)
     async def cleanup(self):
@@ -56,7 +56,12 @@ class Cleaning(commands.Cog):
         if 1 > datetime.datetime.now(tz=local_timezone).hour > 0:
 
             while await len(self.channel.history(limit=123).flatten()):
-                self.channel.purge(limit=99)
+                await self.channel.purge(limit=99)
+
+    @cleanup.error
+    async def cleanup_error(self, error):
+        logger.error(error)
+        await self.channel.send(f"An error ocurred: {error}")
 
 
 def setup(client):
