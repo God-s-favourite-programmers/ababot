@@ -37,7 +37,7 @@ class Cleaning(commands.Cog):
     @commands.has_role("Los Jefes")
     async def clear(self, ctx, amount=10):
         """Delete [amount] of messages."""
-        ctx.channel.purge(limit=amount)
+        await ctx.channel.purge(limit=amount)
 
     @clear.error
     async def clear_error(self, ctx, error):
@@ -56,7 +56,7 @@ class Cleaning(commands.Cog):
         if 1 > datetime.datetime.now(tz=local_timezone).hour > 0:
 
             while await len(self.channel.history(limit=123).flatten()):
-                self.channel.purge(limit=99)
+                await self.channel.purge(limit=99)
 
     @cleanup.error
     async def cleanup_error(self, error):
