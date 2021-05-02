@@ -73,7 +73,7 @@ class Abakus(commands.Cog):
         """Report on restart error."""
 
         logger.error(error)
-        ctx.send(f"An error ocurred while reloading: {error}")
+        await ctx.send(f"An error ocurred while reloading: {error}")
 
     async def post(self, event_object: event) -> None:
         """Post an event in the saved channel if the exact same post does not allready exist."""
