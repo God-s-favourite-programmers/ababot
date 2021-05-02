@@ -56,6 +56,8 @@ class Abakus(commands.Cog):
         logger.info("Restarting loops")
         try:
             async with ctx.typing():
+                self.poster.stop()
+                self.reminder.stop()
                 self.poster.start()
                 self.reminder.start()
         except Exception as e:
