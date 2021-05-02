@@ -93,7 +93,9 @@ class Abakus(commands.Cog):
     @commands.command()
     @commands.has_role("Los Jefes")
     async def post_dev_test(self, ctx):
-        """Post an event starting in two hours, with registration opening in 11 minutes."""
+        """Post dev event.
+        
+        A dev event is an event starting in two hours, with registration opening in 11 minutes."""
 
         dev_event: event = event("Dev event",
                                  "This is a dummy event for dev purposes",
