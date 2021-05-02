@@ -1,5 +1,6 @@
 from datetime import date, datetime
 import logging
+import pytz
 import discord
 from discord.ext import commands, tasks
 
@@ -40,7 +41,6 @@ class Cleaning(commands.Cog):
         else:
             logger.error(error)
             await ctx.send(f"An error ocurred while reloading: {error}")
-
 
     # Commands
     @commands.command()
