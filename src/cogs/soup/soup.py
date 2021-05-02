@@ -27,15 +27,12 @@ class Soup(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        """Save the channel named suppekjøkkenet and start the cleanup loop."""
+        """Save the channel named suppekjøkkenet."""
 
         self.guild = self.client.guilds[0]
         self.channelId = discord.utils.get(
             self.client.get_all_channels(), guild=self.guild, name='suppekjøkkenet').id
         self.channel = self.client.get_channel(self.channelId)
-
-        logger.info(f"Deploying cleaner to Channel: {self.channelId}")
-        self.cleanup.start()
 
     @commands.command()
     async def kok(self, ctx: commands.Context, code: str, info: str, extra_info: str = ""):
@@ -67,14 +64,6 @@ class Soup(commands.Cog):
             await ctx.reply("Uh oh, your soup is simply too large, I can't carry this")
         else:
             await ctx.reply("I don't understand. Did you maybe forget to close you quotes?")
-
-    @tasks.loop(hours=1)
-    async def cleanup(self):
-        """Remove anny messages older than 12 hours in suppekjøkkenet if they don't have a file attached"""
-
-        for message in await self.channel.history(limit=123).flatten():
-            if (len(message.attachments) < 1) and (datetime.datetime.now(tz=local_timezone) > local_timezone.localize(message.created_at) + datetime.timedelta(hours=12)):
-                await message.delete()
 
 
 def setup(client):
