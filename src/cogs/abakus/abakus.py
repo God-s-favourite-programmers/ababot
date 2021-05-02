@@ -41,6 +41,7 @@ class Abakus(commands.Cog):
         await ctx.send(f"Poster running: \t\t {self.poster.is_running()}\nReminder running:\t{self.reminder.is_running()}")
 
     @commands.command()
+    @commands.has_role("Los Jefes")
     async def restart(self, ctx):
         logger.info("Restarting loops")
         try:
@@ -53,7 +54,7 @@ class Abakus(commands.Cog):
             logger.info("All loops are running")
             await ctx.send("Restart complete")
         else:
-            logger.warning("Npt all loops are running")
+            logger.warning("Not all loops are running")
             await ctx.send("Not all loops are running")
 
     @restart.error
@@ -72,6 +73,7 @@ class Abakus(commands.Cog):
             logger.debug(f"Event {event.get_name} listed")
 
     @commands.command()
+    @commands.has_role("Los Jefes")
     async def post_dev_test(self, ctx):
         dev_event:event = event("Dev event",
             "This is a dummy event for dev purposes",
@@ -79,7 +81,15 @@ class Abakus(commands.Cog):
             "Discord",
             datetime.datetime.now(tz=local_timezone)+datetime.timedelta(minutes=11),
             "N/A")
-        await self.post(dev_event)        
+        await self.post(dev_event) 
+
+    @post_dev_test.error
+    async def post_dev_test_error(self, ctx, error):
+        if isinstance(error, commands.errors.CheckFailure):
+            await ctx.send("You don't have permission to use that command")
+        else:
+            logger.error(error)
+            await ctx.send(f"An error ocurred: {error}")
 
     @tasks.loop(minutes=10)
     async def poster(self):
