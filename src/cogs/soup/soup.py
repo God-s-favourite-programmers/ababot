@@ -39,7 +39,9 @@ class Soup(commands.Cog):
 
     @commands.command()
     async def kok(self, ctx: commands.Context, code: str, info: str, extra_info: str = ""):
-        """Format a new message based on the provided information and post it to the saved channel"""
+        """Upload kok.
+        
+        Format a new message based on the provided information and post it to the saved channel."""
 
         message: discord.Message = ctx.message
         attachments = message.attachments
