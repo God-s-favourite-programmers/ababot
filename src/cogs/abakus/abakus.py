@@ -185,7 +185,7 @@ class Abakus(commands.Cog):
         """Report on any errors."""
 
         print(f"Abakus cog error: {error}")
-        await self.channel.send(f"Abakus cog has stopped working due to: {error}")
+        await self.channel.send(f"An error ocurred in {self.name}: {error}")
         logger.error(error)
 
 
