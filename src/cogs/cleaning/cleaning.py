@@ -47,22 +47,21 @@ class Cleaning(commands.Cog):
             await ctx.reply("You don't have permisson to use that command")
         else:
             logger.error(error)
-            await ctx.send(f"An error ocurred while reloading: {error}")
+            await ctx.send(f"An error ocurred while clearing: {error}")
 
     # Loops
     @tasks.loop(hours=1)
     async def cleanup(self):
         """At midnight delete all messages in saved channel."""
+        if 2 > datetime.datetime.now(tz=local_timezone).hour >= 0:
 
-        if 1 > datetime.datetime.now(tz=local_timezone).hour >= 0:
-
-            while await len(self.channel.history(limit=123).flatten()):
-                await self.channel.purge(limit=99)
+            while len(await self.channel.history(limit=123).flatten()) > 0:
+                await self.channel.purge(limit=100)
 
     @cleanup.error
     async def cleanup_error(self, error):
         logger.error(error)
-        await self.channel.send(f"An error ocurred: {error}")
+        await self.channel.send(f"An error ocurred in {self.name}: {error}")
 
 
 def setup(client):
