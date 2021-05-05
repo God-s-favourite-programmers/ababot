@@ -53,7 +53,7 @@ class Cleaning(commands.Cog):
     @tasks.loop(hours=1)
     async def cleanup(self):
         """At midnight delete all messages in saved channel."""
-        if 1 > datetime.datetime.now(tz=local_timezone).hour >= 0:
+        if 2 > datetime.datetime.now(tz=local_timezone).hour >= 0:
 
             while len(await self.channel.history(limit=123).flatten()) > 0:
                 await self.channel.purge(limit=100)
