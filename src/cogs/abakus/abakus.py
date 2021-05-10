@@ -18,17 +18,13 @@ logger = logging.getLogger(__name__)
 class Abakus(commands.Cog):
 
     def __init__(self, client):
-        """Save the refrence to the client."""
+        """Save the channel named ababot and start both loops."""
 
         self.client = client
         self.name = type(self).__name__
         self.delta = datetime.timedelta(minutes=10)
         print(f"Cog {self.name} loaded")
         logger.info(f"Cog {self.name} loaded")
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        """Save the channel named ababot and start both loops."""
 
         self.guild = self.client.guilds[0]
         self.channelId = discord.utils.get(
@@ -50,7 +46,7 @@ class Abakus(commands.Cog):
 
     @commands.command()
     @commands.has_role("Los Jefes")
-    async def restart(self, ctx):
+    async def restart_abakus(self, ctx):
         """Restart both loops."""
 
         logger.info("Restarting loops")
@@ -71,12 +67,12 @@ class Abakus(commands.Cog):
             logger.warning("Not all loops are running")
             await ctx.send("Not all loops are running") 
 
-    @restart.error
+    @restart_abakus.error
     async def restart_error(self, ctx, error):
         """Report on restart error."""
 
         logger.error(error)
-        await ctx.send(f"An error ocurred while reloading: {error}")
+        await ctx.send(f"An error ocurred while restarting: {error}")
 
     async def post(self, event_object: event) -> None:
         """Post an event in the saved channel if the exact same post does not allready exist."""

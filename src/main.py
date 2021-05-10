@@ -22,6 +22,7 @@ async def on_ready():
 
     print("AbaBot is ready")
     logger.info("Bot started")
+    load_all_cogs()
 
 
 def load_all_cogs():
@@ -66,6 +67,5 @@ async def reload_error(ctx, error):
 
 
 if __name__ == "__main__":
-    load_all_cogs()
     logger.info("Running client")
     client.run(getToken.token)

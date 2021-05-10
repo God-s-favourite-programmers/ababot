@@ -11,17 +11,12 @@ logger = logging.getLogger(__name__)
 class Cleaning(commands.Cog):
 
     def __init__(self, client):
-        """Save the refrence to the client."""
+        """Save the channel named bot-commands."""
 
         self.client = client
         self.name = type(self).__name__
         print(f"Cog {self.name} loaded")
         logger.info(f"Cog {self.name} loaded")
-
-    # Events
-    @commands.Cog.listener()
-    async def on_ready(self):
-        """Save the channel named bot-commands."""
 
         self.guild = self.client.guilds[0]
         self.channelId = discord.utils.get(

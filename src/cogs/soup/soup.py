@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Soup(commands.Cog):
 
     def __init__(self, client):
-        """Save the refrence to the client and retreive the code-name pairs of subjects at NTNU."""
+        """Save the channel named suppekjøkkenet."""
 
         self.client = client
         self.name = type(self).__name__
@@ -24,10 +24,6 @@ class Soup(commands.Cog):
             self.codes = json.load(f)
         print(f"Cog {self.name} loaded")
         logger.info(f"Cog {self.name} loaded")
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        """Save the channel named suppekjøkkenet."""
 
         self.guild = self.client.guilds[0]
         self.channelId = discord.utils.get(
