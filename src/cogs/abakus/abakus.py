@@ -56,8 +56,9 @@ class Abakus(commands.Cog):
         logger.info("Restarting loops")
         try:
             async with ctx.typing():
-                self.poster.stop()
-                self.reminder.stop()
+                self.poster.cancel()
+                self.reminder.cancel()
+                await asyncio.sleep(5)
                 self.poster.start()
                 self.reminder.start()
         except Exception as e:
@@ -68,7 +69,7 @@ class Abakus(commands.Cog):
             await ctx.send("Restart complete")
         else:
             logger.warning("Not all loops are running")
-            await ctx.send("Not all loops are running")
+            await ctx.send("Not all loops are running") 
 
     @restart.error
     async def restart_error(self, ctx, error):
