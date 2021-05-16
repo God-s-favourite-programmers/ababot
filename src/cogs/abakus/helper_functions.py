@@ -1,10 +1,11 @@
-import discord
 import datetime
 import re
 import pytz
+import logging
 from src.cogs.abakus.event import Event
 
 local_timezone = pytz.timezone("Europe/Oslo")
+logger = logging.getLogger(__name__)
 
 def generate_message(event_object:Event, template:str):
     if event_object == None:
@@ -48,34 +49,3 @@ def get_event_properties(message, template) -> Event:
         return event_object
     else:
         return
-
-
-
-async def get_dm_history(user):
-    if user.dm_channel:
-        pass
-    else:
-        await user.create_dm()
-
-    history = await user.dm_channel.history(limit=123).flatten()
-    history = [x.content for x in history]
-    return history
-
-async def check_message(message: discord.Message) -> None:
-    """Retreive the information of an event posting and check if the signup time is within the wanted timedelta."""
-
-    template = "reminderTemplate.txt"
-    regexTemplate = "eventRegexPattern.txt"
-    event_object = get_event_properties(message, regexTemplate)
-
-    if event_object == None:
-        return
-
-    signupTime = event_object.get_registration_open()
-    currentTime = datetime.datetime.now(tz=local_timezone)
-
-    if currentTime+self.delta >= signupTime:
-        msg = generate_message(event_object, template)
-
-        for reaction in message.reactions:
-            return True, reaction.users(), msg
