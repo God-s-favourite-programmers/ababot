@@ -20,7 +20,7 @@ async def get_dm_history(user):
     return history
 
 
-async def check_message(message: discord.Message) -> None:
+async def check_message(message: discord.Message, delta) -> None:
     """Retreive the information of an event posting and check if the signup time is within the wanted timedelta."""
 
     template = "reminderTemplate.txt"
@@ -33,14 +33,14 @@ async def check_message(message: discord.Message) -> None:
     signupTime = event_object.get_registration_open()
     currentTime = datetime.datetime.now(tz=local_timezone)
 
-    if currentTime+self.delta >= signupTime:
+    if currentTime+delta >= signupTime:
         msg = generate_message(event_object, template)
 
         for reaction in message.reactions:
             return True, reaction.users(), msg
 
 
-async def remind(self, user: discord.User, msg: str) -> None:
+async def remind(user: discord.User, msg: str) -> None:
     """Send a message to a user if the exact same message does not allready exist."""
 
     alerts = await get_dm_history(user)

@@ -8,6 +8,7 @@ import asyncio
 import datetime
 import logging
 import pytz
+import traceback
 
 local_timezone = pytz.timezone("Europe/Oslo")
 logger = logging.getLogger(__name__)
@@ -96,7 +97,7 @@ class Abakus(commands.Cog):
         messages = [x for x in await self.channel.history(limit=123).flatten() if x.author == self.client.user]
 
         for message in messages:
-            ok, user, msg = await check_message(message)
+            ok, user, msg = await check_message(message, self.delta)
             if not ok:
                 continue
             remind(user, msg)
@@ -111,7 +112,7 @@ class Abakus(commands.Cog):
             print(f"Abakus cog error: {error}")
             logger.error(error)
 
-            await self.channel.send(f"An error ocurred in {self.name}: {error}")
+            await self.channel.send(f"An error ocurred: {error}\nTraceback:\n```{traceback.format_exc()}```")
 
 
     @commands.Cog.listener()
@@ -122,7 +123,7 @@ class Abakus(commands.Cog):
             await ctx.reply("You don't have permission to use that command")
         else:
             logger.error(error)
-            await ctx.send(f"An error ocurred: {error}")
+            await ctx.send(f"An error ocurred: {error}\nTraceback:\n```{traceback.format_exc()}```")
 
 
 
