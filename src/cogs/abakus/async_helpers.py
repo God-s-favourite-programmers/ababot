@@ -28,16 +28,20 @@ async def check_message(message: discord.Message, delta) -> None:
     event_object = get_event_properties(message, regexTemplate)
 
     if event_object == None:
-        return
+        return (False, None, None)
 
     signupTime = event_object.get_registration_open()
     currentTime = datetime.datetime.now(tz=local_timezone)
 
     if currentTime+delta >= signupTime:
         msg = generate_message(event_object, template)
-
+        users = []
         for reaction in message.reactions:
-            return True, reaction.users(), msg
+            users.extend(await reaction.users().flatten())
+        return (True, users, msg)
+    
+    else:
+        return (False, None, None)
 
 
 async def remind(user: discord.User, msg: str) -> None:

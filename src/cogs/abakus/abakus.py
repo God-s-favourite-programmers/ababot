@@ -97,10 +97,12 @@ class Abakus(commands.Cog):
         messages = [x for x in await self.channel.history(limit=123).flatten() if x.author == self.client.user]
 
         for message in messages:
-            ok, user, msg = await check_message(message, self.delta)
+            ok, users, msg = await check_message(message, self.delta)
+
             if not ok:
                 continue
-            remind(user, msg)
+            for user in users:
+                await remind(user, msg)
 
 
     @reminder.error
@@ -115,8 +117,7 @@ class Abakus(commands.Cog):
             await self.channel.send(f"An error ocurred: {error}\nTraceback:\n```{traceback.format_exc()}```")
 
 
-    @commands.Cog.listener()
-    async def cog_command_error(ctx, error):
+    async def cog_command_error(self, ctx, error):
         """If error is due to lack of permission, notify the user of their lack of permission. Otherwise warn of error."""
 
         if isinstance(error, commands.errors.CheckFailure):
