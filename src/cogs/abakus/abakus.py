@@ -161,10 +161,12 @@ class Abakus(commands.Cog):
     @poster.error
     async def cog_command_error(self, error):
         """Report on any errors."""
+
         if not isinstance(error, ConnectionError):
             print(f"Abakus cog error: {error}")
-            await self.channel.send(f"An error ocurred in {self.name}: {error}")
             logger.error(error)
+            
+            await self.channel.send(f"An error ocurred in {self.name}: {error}")
 
 
 
