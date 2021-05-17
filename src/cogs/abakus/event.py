@@ -1,6 +1,6 @@
 import datetime
 
-class event():
+class Event():
     def __init__(self, name:str, description:str, event_time:datetime.datetime, event_location:str, registration_open:datetime.datetime, url:str) -> None:
         self.name:str = name
         self.description:str = description

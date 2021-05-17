@@ -1,11 +1,13 @@
 import datetime
 import re
 import pytz
-from src.cogs.abakus.event import event
+import logging
+from src.cogs.abakus.event import Event
 
 local_timezone = pytz.timezone("Europe/Oslo")
+logger = logging.getLogger(__name__)
 
-def generate_message(event_object:event, template:str):
+def generate_message(event_object:Event, template:str):
     if event_object == None:
         raise ValueError("Event object is None")
     with open("./src/cogs/abakus/templates/"+template, "r") as f:
@@ -22,7 +24,7 @@ def generate_message(event_object:event, template:str):
     ))
 
 
-def get_event_properties(message, template) -> event:
+def get_event_properties(message, template) -> Event:
     with open("./src/cogs/abakus/templates/"+template, "r") as f:
         pattern = f.read()
     messageSearch = re.search(pattern, message.content)
@@ -43,19 +45,7 @@ def get_event_properties(message, template) -> event:
             "event_time": startTime,
             "url": url
         }
-        event_object = event(**event_options)
+        event_object = Event(**event_options)
         return event_object
     else:
         return
-
-
-
-async def get_dm_history(user):
-    if user.dm_channel:
-        pass
-    else:
-        await user.create_dm()
-
-    history = await user.dm_channel.history(limit=123).flatten()
-    history = [x.content for x in history]
-    return history

@@ -3,7 +3,7 @@ import json
 import requests
 import datetime
 import pytz
-from src.cogs.abakus.event import event
+from src.cogs.abakus.event import Event
 
 local_timezone = pytz.timezone("Europe/Oslo")
 
@@ -22,7 +22,7 @@ def list_events() -> list[int]:
     return id_list
 
 
-def get_event(eventId:int) -> event:
+def get_event(eventId:int) -> Event:
     url = "https://lego.abakus.no/api/v1/events/"+str(eventId)
     r = requests.get(url)
     data = json.loads(r.text)
@@ -44,7 +44,7 @@ def get_event(eventId:int) -> event:
         registration_open = pytz.utc.localize(registration_open, is_dst=None).astimezone(local_timezone)
     except IndexError:
         registration_open = None
-    return event(**{
+    return Event(**{
         "name": name,
         "description": description,
         "event_time": event_time,
