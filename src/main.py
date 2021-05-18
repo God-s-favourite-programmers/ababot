@@ -15,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 intents = discord.Intents.default()
 intents.members = True
-client = commands.Bot(command_prefix=".", intents=intents, help_command=None)
+client = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 
 @client.event
