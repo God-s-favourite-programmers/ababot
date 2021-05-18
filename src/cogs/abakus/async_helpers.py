@@ -66,5 +66,5 @@ async def post(channel, event_object: Event) -> None:
     messages = [x.content for x in await channel.history(limit=123).flatten()]
 
     if msg not in messages:
-        await channel.send(msg)
+        await channel.send(embed=msg)
         logger.debug(f"Event {event_object.get_name()} listed")

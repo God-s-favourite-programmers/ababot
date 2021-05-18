@@ -29,6 +29,7 @@ def get_event(eventId:int) -> Event:
     name = data["title"]
     description = data["description"]
     event_time = data["startTime"]
+    thumbnail = data["cover"]
     regex = re.search(
         r"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z", event_time)
     event_time = datetime.datetime(int(regex.group(1)), int(regex.group(2)), int(
@@ -50,5 +51,6 @@ def get_event(eventId:int) -> Event:
         "event_time": event_time,
         "event_location": event_location,
         "registration_open": registration_open,
-        "url": "https://abakus.no/events/"+str(eventId)
+        "url": "https://abakus.no/events/"+str(eventId),
+        "thumbnail": thumbnail
     }) if registration_open != None else None
