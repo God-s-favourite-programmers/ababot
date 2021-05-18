@@ -72,3 +72,9 @@ async def post(channel, event_object: Event) -> None:
     if msg.title not in messages:
         await channel.send(embed=msg)
         logger.debug(f"Event {event_object.get_name()} listed")
+    elif msg.title in messages:
+        async for elem in channel.history(limit=123):
+            if len(elem.embeds) > 0 and elem.embeds[0].title == msg.title:
+                print("here")
+                await elem.edit(embed = generate_message(event_object,template))
+    
