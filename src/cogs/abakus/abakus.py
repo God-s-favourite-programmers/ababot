@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 class Abakus(commands.Cog):
+    """
+    Reminds the server of events by abakus
+    """
 
     def __init__(self, client):
         """Save the channel named ababot and start both loops."""

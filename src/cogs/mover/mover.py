@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class Mover(commands.Cog):
+    """
+    Moves users connected to VC
+    """
 
     def __init__(self, client):
         """Save the refrence to the client."""
@@ -24,6 +27,10 @@ class Mover(commands.Cog):
     @commands.command()
 
     async def em(self, ctx, name="Lounge"):
+        """Move users to [Voice Channel].
+
+        Defaults to Lounge.
+        """
         try:
             self.channelId = discord.utils.get(
                 self.client.get_all_channels(), guild=self.guild, name=name).id

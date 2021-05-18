@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class Example(commands.Cog):
+    """
+    Description of cog
+    """
 
     def __init__(self, client):
         """Save the refrence to the client."""
