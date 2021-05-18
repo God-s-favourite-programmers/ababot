@@ -20,23 +20,7 @@ class Autism(commands.Cog):
         logger.info(f"Cog {self.name} loaded")
 
     # Events
-    @commands.Cog.listener()
-    async def on_ready(self):
-        pass
 
-    # Commands
-    """@commands.command()
-    async def ping(self, ctx):
-        Responds with Pong!
-        await ctx.send("Pong!")"""
-
-    """@ping.error
-    async def ping_error(self, ctx, error):
-        Handles error originating from ping command
-        logger.error(error)
-        print(f"Error ocurred: {error}")
-        await ctx.send(f"An error ocurred: {error}")"""
-    
     @commands.command()
 
     async def em(self, ctx, name="Lounge"):
