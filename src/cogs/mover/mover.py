@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 # Example cog class
 
 
-class Autism(commands.Cog):
+class Mover(commands.Cog):
 
     def __init__(self, client):
         """Save the refrence to the client."""
@@ -38,4 +38,4 @@ class Autism(commands.Cog):
 
 def setup(client):
     """Sets up the cog."""
-    client.add_cog(Autism(client))
+    client.add_cog(Mover(client))
