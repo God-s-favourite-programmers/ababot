@@ -8,6 +8,7 @@ from src.cogs.abakus.event import Event
 
 local_timezone = pytz.timezone("Europe/Oslo")
 logger = logging.getLogger(__name__)
+messages = []
 
 async def get_dm_history(user):
     if user.dm_channel:
@@ -63,8 +64,11 @@ async def post(channel, event_object: Event) -> None:
     if msg == None or len(msg) == 0:
         raise ValueError("Message is none")
 
-    messages = [x.content for x in await channel.history(limit=123).flatten()]
+    
+    async for elem in channel.history(limit=123):
+        if len(elem.embeds) > 0 and elem.embeds[0].title not in messages:
+            messages.append(elem.embeds[0].title)
 
-    if msg not in messages:
+    if msg.title not in messages:
         await channel.send(embed=msg)
         logger.debug(f"Event {event_object.get_name()} listed")
