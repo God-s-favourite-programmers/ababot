@@ -56,7 +56,7 @@ async def remind(user: discord.User, msg: str) -> None:
 
 
 async def post(channel, event_object: Event) -> None:
-    """Post an event in the saved channel if the exact same post does not allready exist."""
+    """Post an event in the saved channel or update if it currently exists."""
 
     template = "eventTemplate.txt"
     msg = generate_message(event_object, template)
@@ -75,6 +75,5 @@ async def post(channel, event_object: Event) -> None:
     elif msg.title in messages:
         async for elem in channel.history(limit=123):
             if len(elem.embeds) > 0 and elem.embeds[0].title == msg.title:
-                print("here")
                 await elem.edit(embed = generate_message(event_object,template))
     
