@@ -2,3 +2,6 @@ token.txt
 Pipfile
 Pipfile.lock
 *.pyc
+.vscode/settings.json
+.vscode/settings.json
+target/pylist.json

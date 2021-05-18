@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "C:\\Users\\stefa\\.virtualenvs\\ababot-8FGI43EJ\\Scripts\\python.exe"
+    "python.pythonPath": "C:\\Python39\\python.exe",
+    "activestate.promptRuntimeCreation": false
 }
