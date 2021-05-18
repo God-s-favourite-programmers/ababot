@@ -15,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 intents = discord.Intents.default()
 intents.members = True
-client = commands.Bot(command_prefix="!",intents=intents)
+client = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 
 @client.event
@@ -31,7 +31,7 @@ def load_all_cogs():
     """Load all cogs found in src/cogs/ where the python file has the same name as its directory."""
 
     logger.info("Loading cogs")
-    cogs = [f.name for f in os.scandir("./src/cogs")]
+    cogs = [f.name for f in os.scandir("./src/cogs") if f.name != "example"]
     for cog in cogs:
         client.load_extension(f"src.cogs.{cog}.{cog}")
 
@@ -40,7 +40,7 @@ def unload_all_cogs():
     """Unload all cogs found in src/cogs/ where the oython file has the same name as its directory."""
 
     logger.info("Unloading cogs")
-    cogs = [f.name for f in os.scandir("./src/cogs")]
+    cogs = [f.name for f in os.scandir("./src/cogs") if f.name != "example"]
     for cog in cogs:
         client.unload_extension(f"src.cogs.{cog}.{cog}")
 

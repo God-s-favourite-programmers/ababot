@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class Soup(commands.Cog):
+    """
+    Uploads helpful files to #suppekjøkkenet
+    """
 
     def __init__(self, client):
         """Save the channel named suppekjøkkenet."""
@@ -34,7 +37,7 @@ class Soup(commands.Cog):
     async def kok(self, ctx: commands.Context, code: str, info: str, extra_info: str = ""):
         """Upload kok.
         
-        Format a new message based on the provided information and post it to the saved channel."""
+        Formats a new message based on the provided information and post it to the saved channel."""
 
         message: discord.Message = ctx.message
         attachments = message.attachments

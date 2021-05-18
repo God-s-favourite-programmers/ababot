@@ -9,6 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 class Cleaning(commands.Cog):
+    """
+    Lets moderators bulk delete messages
+    """
 
     def __init__(self, client):
         """Save the channel named bot-commands."""
