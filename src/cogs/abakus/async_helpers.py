@@ -8,6 +8,7 @@ from src.cogs.abakus.event import Event
 
 local_timezone = pytz.timezone("Europe/Oslo")
 logger = logging.getLogger(__name__)
+messages = []
 
 async def get_dm_history(user):
     if user.dm_channel:
@@ -55,7 +56,7 @@ async def remind(user: discord.User, msg: str) -> None:
 
 
 async def post(channel, event_object: Event) -> None:
-    """Post an event in the saved channel if the exact same post does not allready exist."""
+    """Post an event in the saved channel or update if it currently exists."""
 
     template = "eventTemplate.txt"
     msg = generate_message(event_object, template)
@@ -63,8 +64,16 @@ async def post(channel, event_object: Event) -> None:
     if msg == None or len(msg) == 0:
         raise ValueError("Message is none")
 
-    messages = [x.content for x in await channel.history(limit=123).flatten()]
+    
+    async for elem in channel.history(limit=123):
+        if len(elem.embeds) > 0 and elem.embeds[0].title not in messages:
+            messages.append(elem.embeds[0].title)
 
-    if msg not in messages:
-        await channel.send(msg)
+    if msg.title not in messages:
+        await channel.send(embed=msg)
         logger.debug(f"Event {event_object.get_name()} listed")
+    elif msg.title in messages:
+        async for elem in channel.history(limit=123):
+            if len(elem.embeds) > 0 and elem.embeds[0].title == msg.title:
+                await elem.edit(embed = generate_message(event_object,template))
+    

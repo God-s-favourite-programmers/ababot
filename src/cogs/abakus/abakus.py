@@ -75,10 +75,17 @@ class Abakus(commands.Cog):
         
         A dev event is an event starting in two hours, with registration opening in 11 minutes."""
 
-        dev_event: Event = Event("Dev event", "This is a dummy event for dev purposes", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(hours=2), "Discord", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(minutes=11), "N/A")
+        dev_event: Event = Event("Dev event", "This is a dummy event for dev purposes", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(hours=2), "Discord", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(minutes=11), "https://abakus.no/events/2901","https://thumbor.abakus.no/40uu7jE2T02LcSrnDonxbJGSmd0=/0x500/Skjermbilde2021-05-1_sRKgopY.png")
 
         await post(self.channel, dev_event)
 
+    @commands.command()
+    @commands.has_role("Los Jefes")
+    async def post_updated(self,ctx):
+        """Check if bot can update message"""
+        dev_event: Event = Event("Dev event", "This is an updatet dummy event for dev purposes", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(hours=2), "Discord", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(minutes=11), "https://abakus.no/events/2901","https://thumbor.abakus.no/40uu7jE2T02LcSrnDonxbJGSmd0=/0x500/Skjermbilde2021-05-1_sRKgopY.png")
+
+        await post(self.channel, dev_event)
 
     @tasks.loop(minutes=10)
     async def poster(self):
