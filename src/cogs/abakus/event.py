@@ -24,7 +24,7 @@ class Event():
     def get_event_location(self) -> str:
         return self.event_location
 
-    def get_registration_open(self) -> str:
+    def get_registration_open(self) -> datetime.datetime:
         return self.registration_open
 
     def get_url(self) -> str:
