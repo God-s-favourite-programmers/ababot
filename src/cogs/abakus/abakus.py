@@ -77,7 +77,7 @@ class Abakus(commands.Cog):
 
         dev_event: Event = Event("Dev event", "This is a dummy event for dev purposes", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(hours=2), "Discord", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(minutes=11), "https://abakus.no/events/2901","https://thumbor.abakus.no/40uu7jE2T02LcSrnDonxbJGSmd0=/0x500/Skjermbilde2021-05-1_sRKgopY.png")
 
-        await post(self.channel, dev_event)
+        await post(self.channel, dev_event, self.client)
 
     @commands.command()
     @commands.has_role("Los Jefes")
@@ -85,7 +85,7 @@ class Abakus(commands.Cog):
         """Check if bot can update message"""
         dev_event: Event = Event("Dev event", "This is an updatet dummy event for dev purposes", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(hours=2), "Discord", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(minutes=11), "https://abakus.no/events/2901","https://thumbor.abakus.no/40uu7jE2T02LcSrnDonxbJGSmd0=/0x500/Skjermbilde2021-05-1_sRKgopY.png")
 
-        await post(self.channel, dev_event)
+        await post(self.channel, dev_event, self.client)
 
     @tasks.loop(minutes=10)
     async def poster(self):
@@ -95,7 +95,7 @@ class Abakus(commands.Cog):
         events: list[Event] = [y for y in [get_event(x) for x in list_events()] if y != None]
 
         for event_object in events:
-            await post(self.channel, event_object)
+            await post(self.channel, event_object, self.client)
 
 
     @tasks.loop(minutes=1)
@@ -104,15 +104,15 @@ class Abakus(commands.Cog):
 
         logger.info("Reminder started")
 
-        messages = [x for x in await self.channel.history(limit=123).flatten() if x.author == self.client.user]
 
-        for message in messages:
-            ok, users, msg = await check_message(message, self.delta)
+        async for message in self.channel.history(limit=123):
+            if len(message.embeds) > 0:
+                ok, users, msg = await check_message(message, self.delta)
 
-            if not ok:
-                continue
-            for user in users:
-                await remind(user, msg)
+                if not ok:
+                    continue
+                for user in users:
+                    await remind(user, msg, self.client)
 
 
     @reminder.error
