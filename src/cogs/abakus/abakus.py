@@ -108,7 +108,6 @@ class Abakus(commands.Cog):
         async for message in self.channel.history(limit=123):
             if len(message.embeds) > 0:
                 ok, users, msg = await check_message(message, self.delta)
-
                 if not ok:
                     continue
                 for user in users:
@@ -140,7 +139,6 @@ class Abakus(commands.Cog):
                 async for message in member.dm_channel.history(limit=123):
                     if message.author == self.client.user:
                         await clean(message, others)
-
 
 
     @reminder.error

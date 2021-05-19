@@ -31,7 +31,6 @@ def generate_message(event_object:Event) -> discord.Embed:
 
 def get_event_properties(message: discord.Message) -> Event:
     """Return an object representing the event in the message """
-
     if len(message.embeds) > 0:
         embed = message.embeds[0]
     else:
@@ -67,5 +66,4 @@ def get_event_properties(message: discord.Message) -> Event:
         "thumbnail": thumbnail
     }
     event_object:Event = Event(**event_options)
-
     return event_object

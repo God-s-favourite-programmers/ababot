@@ -21,7 +21,6 @@ async def get_dm_history(user) -> List[discord.Message]:
     async for alert in user.dm_channel.history(limit=123):
         if len(alert.embeds) > 0:
             alerts.append(alert)
-    
     return alerts
 
 
@@ -39,7 +38,6 @@ async def check_message(message: discord.Message, delta) -> Set:
     if currentTime+delta >= signupTime:
         message_embed:discord.Embed = generate_message(event_object)
         users:list = []
-
         for reaction in message.reactions:
             users.extend(await reaction.users().flatten())
 
