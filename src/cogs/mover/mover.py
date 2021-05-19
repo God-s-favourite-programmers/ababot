@@ -40,7 +40,7 @@ class Mover(commands.Cog):
                 if mem.voice != None:
                     await mem.move_to(self.channel)
         except (CommandInvokeError, AttributeError,HTTPException):   
-            await ctx.send("lease specify channel correctly")
+            await ctx.send("Please specify channel correctly")
 
 
 def setup(client):
