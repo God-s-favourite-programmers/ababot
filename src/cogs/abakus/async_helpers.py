@@ -8,7 +8,6 @@ from src.cogs.abakus.event import Event
 
 local_timezone = pytz.timezone("Europe/Oslo")
 logger = logging.getLogger(__name__)
-messages = []
 
 async def get_dm_history(user):
     if user.dm_channel:
@@ -16,17 +15,17 @@ async def get_dm_history(user):
     else:
         await user.create_dm()
 
-    history = await user.dm_channel.history(limit=123).flatten()
-    history = [x.content for x in history]
-    return history
+    alerts = []
+    async for elem in user.dm_channel.history(limit=123):
+        if len(elem.embeds) > 0:
+            alerts.append(elem)
+    return alerts
 
 
 async def check_message(message: discord.Message, delta) -> None:
     """Retreive the information of an event posting and check if the signup time is within the wanted timedelta."""
 
-    template = "reminderTemplate.txt"
-    regexTemplate = "eventRegexPattern.txt"
-    event_object = get_event_properties(message, regexTemplate)
+    event_object = get_event_properties(message)
 
     if event_object == None:
         return (False, None, None)
@@ -35,7 +34,7 @@ async def check_message(message: discord.Message, delta) -> None:
     currentTime = datetime.datetime.now(tz=local_timezone)
 
     if currentTime+delta >= signupTime:
-        msg = generate_message(event_object, template)
+        msg = generate_message(event_object)
         users = []
         for reaction in message.reactions:
             users.extend(await reaction.users().flatten())
@@ -45,26 +44,29 @@ async def check_message(message: discord.Message, delta) -> None:
         return (False, None, None)
 
 
-async def remind(user: discord.User, msg: str) -> None:
+async def remind(user: discord.User, msg: str, client) -> None:
     """Send a message to a user if the exact same message does not allready exist."""
 
     alerts = await get_dm_history(user)
+    alert_titles = [x.embeds[0].title for x in alerts]
 
-    if msg not in alerts and len(msg) > 0:
-        logger.debug("Direct message sent")
-        await user.send(msg)
+    if msg.title not in alert_titles:
+        await user.send(embed=msg)
+    elif msg.title in alert_titles:
+        for message in alerts:
+            if len(message.embeds) > 0 and message.embeds[0].title == msg.title and message.author == client.user:
+                await message.edit(embed=msg)
 
 
-async def post(channel, event_object: Event) -> None:
+async def post(channel, event_object: Event, client) -> None:
     """Post an event in the saved channel or update if it currently exists."""
 
-    template = "eventTemplate.txt"
-    msg = generate_message(event_object, template)
+    msg = generate_message(event_object)
 
     if msg == None or len(msg) == 0:
         raise ValueError("Message is none")
 
-    
+    messages = []
     async for elem in channel.history(limit=123):
         if len(elem.embeds) > 0 and elem.embeds[0].title not in messages:
             messages.append(elem.embeds[0].title)
@@ -74,6 +76,6 @@ async def post(channel, event_object: Event) -> None:
         logger.debug(f"Event {event_object.get_name()} listed")
     elif msg.title in messages:
         async for elem in channel.history(limit=123):
-            if len(elem.embeds) > 0 and elem.embeds[0].title == msg.title:
-                await elem.edit(embed = generate_message(event_object,template))
+            if len(elem.embeds) > 0 and elem.embeds[0].title == msg.title and elem.author == client.user:
+                await elem.edit(embed = generate_message(event_object))
     
