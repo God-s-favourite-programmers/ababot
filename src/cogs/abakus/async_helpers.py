@@ -70,17 +70,17 @@ async def post(channel, event_object: Event, client) -> None:
     messages:List[discord.Message] = []
     messages_titles:List[str] = []
     async for message in channel.history(limit=123):
-        if len(message.embeds) > 0 and message.embeds[0].title not in messages_titles:
-            messages_titles.append(message.embeds[0].title)
+        if len(message.embeds) > 0 and message.embeds[0].url not in messages_titles:
+            messages_titles.append(message.embeds[0].url)
             messages.append(message)
 
-    if message_embed.title not in messages_titles:
+    if message_embed.url not in messages_titles:
         await channel.send(embed=message_embed)
         logger.debug(f"Event {event_object.get_name()} listed")
 
     else:
         for message in messages:
-            if len(message.embeds) > 0 and message.embeds[0].title == message_embed.title and message.author == client.user:
+            if len(message.embeds) > 0 and message.embeds[0].url == message_embed.url and message.author == client.user:
                 await message.edit(embed = generate_message(event_object))
     
 
