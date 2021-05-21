@@ -31,7 +31,7 @@ class Abakus(commands.Cog):
         logger.info(f"Cog {self.name} loaded")
 
         self.guild = self.client.guilds[0]
-        self.channelId = discord.utils.get(self.client.get_all_channels(), guild=self.guild, name='ababot').id
+        self.channelId = discord.utils.get(self.client.get_all_channels(), guild=self.guild, name='abakus').id
         self.channel = self.client.get_channel(self.channelId)
 
         logger.info(f"Deploying reminder and poster to Channel: {self.channelId}")
