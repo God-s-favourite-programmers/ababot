@@ -51,14 +51,14 @@ async def remind(user: discord.User, message_embed: str, client) -> None:
     """Send a message to a user if the exact same message does not allready exist."""
 
     alerts:List[discord.Message] = await get_dm_history(user)
-    alert_titles:List[str] = [x.embeds[0].title for x in alerts]
+    alert_url:List[str] = [x.embeds[0].url for x in alerts]
 
-    if message_embed.title not in alert_titles:
+    if message_embed.url not in alert_url:
         await user.send(embed=message_embed)
 
     else:
         for message in alerts:
-            if len(message.embeds) > 0 and message.embeds[0].title == message_embed.title and message.author == client.user:
+            if len(message.embeds) > 0 and message.embeds[0].url == message_embed.url and message.author == client.user:
                 await message.edit(embed=message_embed)
 
 
@@ -68,13 +68,13 @@ async def post(channel, event_object: Event, client) -> None:
     message_embed:discord.Embed = generate_message(event_object)
 
     messages:List[discord.Message] = []
-    messages_titles:List[str] = []
+    messages_url:List[str] = []
     async for message in channel.history(limit=123):
-        if len(message.embeds) > 0 and message.embeds[0].url not in messages_titles:
-            messages_titles.append(message.embeds[0].url)
+        if len(message.embeds) > 0 and message.embeds[0].url not in messages_url:
+            messages_url.append(message.embeds[0].url)
             messages.append(message)
 
-    if message_embed.url not in messages_titles:
+    if message_embed.url not in messages_url:
         await channel.send(embed=message_embed)
         logger.debug(f"Event {event_object.get_name()} listed")
 
