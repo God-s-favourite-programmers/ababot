@@ -83,7 +83,7 @@ class Abakus(commands.Cog):
         
         A dev event is an event starting in two hours, with registration opening in 11 minutes."""
 
-        dev_event: Event = Event(f"Dev event{time.time()}", "This is a dummy event for dev purposes", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(hours=2), "Discord", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(minutes=11), "https://abakus.no/events/2901","https://thumbor.abakus.no/40uu7jE2T02LcSrnDonxbJGSmd0=/0x500/Skjermbilde2021-05-1_sRKgopY.png")
+        dev_event: Event = Event(f"Dev event {time.time()}", f"This is a dummy event for dev purposes created at {time.time()}", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(hours=2), "Discord", datetime.datetime.now(tz=local_timezone)+datetime.timedelta(minutes=11), "https://abakus.no/events/2901","https://thumbor.abakus.no/40uu7jE2T02LcSrnDonxbJGSmd0=/0x500/Skjermbilde2021-05-1_sRKgopY.png")
 
         await post(self.channel, dev_event, self.client)
 
