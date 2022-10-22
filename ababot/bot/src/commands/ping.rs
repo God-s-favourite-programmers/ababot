@@ -2,7 +2,7 @@ use serenity::{model::prelude::interaction::application_command::CommandDataOpti
 
 
 
-pub async fn run(_options: &[CommandDataOption]) -> String {
+pub fn run(_options: &[CommandDataOption]) -> String {
     "Pong!".to_string()
 }
 

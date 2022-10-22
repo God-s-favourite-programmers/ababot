@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 dir_macros = { path = "../dir_macros" }
 serenity = "0.11"
-tracing = "*"
-tokio = "*"
+tracing = "0.1"
+tokio = { version = "1", features =  ["full"] }

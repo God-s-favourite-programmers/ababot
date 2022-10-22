@@ -16,7 +16,7 @@ impl EventHandler for Handler {
             tracing::debug!("Reveeiced command interaction {:#?}", command);
 
             let input = command.data.name.as_str();
-            let content = dir_macros::invoke!("bot/src/commands" "run(&command.data.options)");
+            let content = dir_macros::invoke!("bot/src/commands" "commands" "run(&command.data.options)");
 
             if let Err(why) = command.create_interaction_response(&ctx.http, |response| {
                 response.kind(InteractionResponseType::ChannelMessageWithSource)
