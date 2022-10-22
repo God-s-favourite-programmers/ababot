@@ -6,3 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dir_macros = { path = "../dir_macros" }
+serenity = "0.11"
+tracing = "*"
+tokio = "*"

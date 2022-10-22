@@ -32,9 +32,9 @@ fn get_file_names(dir: ReadDir) -> Vec<String> {
 pub fn import(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let dir_path = input.value();
-    let dir = match fs::read_dir(dir_path) {
+    let dir = match fs::read_dir(&dir_path) {
         Ok(dir) => dir,
-        Err(e) => panic!("{}", e),
+        Err(e) => panic!("Error opening directory {}: {}", dir_path, e),
     };
 
     let imports = get_file_names(dir)
