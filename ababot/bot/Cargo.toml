@@ -3,10 +3,13 @@ name = "bot"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["dice"]
+dice = ["dep:rand"]
 
 [dependencies]
 dir_macros = { path = "../dir_macros" }
 serenity = { version = "0.11", default-features = false, features = ["client", "builder", "model", "http", "gateway", "client", "cache", "utils", "rustls_backend"] }
 tracing = "0.1"
 tokio = { version = "1", features =  ["full"] }
+rand = { version = "0.8", optional = true}

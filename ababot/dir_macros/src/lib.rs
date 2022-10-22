@@ -69,7 +69,7 @@ impl Parse for InvocationTarget {
 }
 
 #[proc_macro]
-pub fn invoke(input: TokenStream) -> TokenStream {
+pub fn run_commands(input: TokenStream) -> TokenStream {
     let InvocationTarget {
         directory,
         rust_path,
@@ -93,6 +93,38 @@ pub fn invoke(input: TokenStream) -> TokenStream {
         ))
     }
     output.push_str("_ => \"Unrecognized command\".to_string()\n}");
+
+    match output.parse() {
+        Ok(tok_stream) => tok_stream,
+        Err(e) => panic!("Error parsing: {}", e),
+    }
+}
+
+
+#[proc_macro]
+pub fn register_commands(input: TokenStream) -> TokenStream {
+    let InvocationTarget {
+        directory,
+        rust_path,
+        function_name,
+    } = parse_macro_input!(input as InvocationTarget);
+
+    let dir = match fs::read_dir(directory.value()) {
+        Ok(dir) => dir,
+        Err(e) => panic!("{}", e),
+    };
+
+    // commands.create_application_command(|command| commands::ping::register(command))
+    let names = get_file_names(dir);
+    let mut output = String::from("commands\n");
+    for name in names {
+        output.push_str(&format!(
+                ".create_application_command(|command| {}::{}::{})\n",
+            rust_path.value(),
+            name,
+            function_name.value()
+        ))
+    }
 
     match output.parse() {
         Ok(tok_stream) => tok_stream,

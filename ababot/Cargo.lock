@@ -67,6 +67,7 @@ name = "bot"
 version = "0.1.0"
 dependencies = [
  "dir_macros",
+ "rand",
  "serenity",
  "tokio",
  "tracing",
