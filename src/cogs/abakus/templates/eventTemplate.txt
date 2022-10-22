@@ -1,5 +1,0 @@
-> **{eventName}**
-{eventDescription}
-Begins on {startTime} in {eventLocation}
-Registrations begin on {signupTime}
-{url}
