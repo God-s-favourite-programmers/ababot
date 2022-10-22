@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 dir_macros = { path = "../dir_macros" }
-serenity = "0.11"
+serenity = { version = "0.11", default-features = false, features = ["client", "builder", "model", "http", "gateway", "client", "cache", "utils", "rustls_backend"] }
 tracing = "0.1"
 tokio = { version = "1", features =  ["full"] }

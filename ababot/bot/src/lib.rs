@@ -13,7 +13,7 @@ pub struct Handler;
 impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
-            tracing::debug!("Reveeiced command interaction {:#?}", command);
+            tracing::debug!("Received command interaction {:#?}", command);
 
             let input = command.data.name.as_str();
             let content = dir_macros::invoke!("bot/src/commands" "commands" "run(&command.data.options)");
