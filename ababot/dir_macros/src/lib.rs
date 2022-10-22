@@ -51,15 +51,18 @@ pub fn import(input: TokenStream) -> TokenStream {
 
 struct InvocationTarget {
     directory: LitStr,
+    rust_path: LitStr,
     function_name: LitStr,
 }
 
 impl Parse for InvocationTarget {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let directory: LitStr = input.parse()?;
+        let rust_path: LitStr = input.parse()?;
         let function_name: LitStr = input.parse()?;
         Ok(InvocationTarget {
             directory,
+            rust_path,
             function_name,
         })
     }
@@ -69,6 +72,7 @@ impl Parse for InvocationTarget {
 pub fn invoke(input: TokenStream) -> TokenStream {
     let InvocationTarget {
         directory,
+        rust_path,
         function_name,
     } = parse_macro_input!(input as InvocationTarget);
 
@@ -80,18 +84,15 @@ pub fn invoke(input: TokenStream) -> TokenStream {
     let names = get_file_names(dir);
     let mut output = String::from(" match input {\n");
     for name in names {
-        let val = directory.value();
-        let mut iterator = val.split("/").map(|s| s.to_string());
-        iterator.next();
         output.push_str(&format!(
-            "\"{}\" => {}::{}::{}(),\n",
+            "\"{}\" => {}::{}::{},\n",
             name,
-            iterator.collect::<Vec<String>>().join("::"),
+            rust_path.value(),
             name,
             function_name.value()
         ))
     }
-    output.push_str("_ => \"Oh no\".to_string()\n}");
+    output.push_str("_ => \"Unrecognized command\".to_string()\n}");
 
     match output.parse() {
         Ok(tok_stream) => tok_stream,
