@@ -1,9 +1,9 @@
 use std::env;
 
-use serenity::model::prelude::{Ready, GuildId};
-use serenity::prelude::{Context, EventHandler};
-use serenity::{async_trait};
+use serenity::async_trait;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
+use serenity::model::prelude::{GuildId, Ready};
+use serenity::prelude::{Context, EventHandler};
 
 pub mod commands;
 
@@ -16,17 +16,19 @@ impl EventHandler for Handler {
             tracing::debug!("Received command interaction {:#?}", command);
 
             let input = command.data.name.as_str();
-            let content = dir_macros::invoke!("bot/src/commands" "commands" "run(&command.data.options)");
+            let content = dir_macros::run_commands!("bot/src/commands" "commands" "run(&command.data.options)");
 
-            if let Err(why) = command.create_interaction_response(&ctx.http, |response| {
-                response.kind(InteractionResponseType::ChannelMessageWithSource)
-                .interaction_response_data(|message| message.content(content))
-            }).await {
+            if let Err(why) = command
+                .create_interaction_response(&ctx.http, |response| {
+                    response
+                        .kind(InteractionResponseType::ChannelMessageWithSource)
+                        .interaction_response_data(|message| message.content(content))
+                })
+                .await
+            {
                 tracing::warn!("Failed to run command {}: {}", input, why);
             }
-
         }
-
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
@@ -40,7 +42,7 @@ impl EventHandler for Handler {
         );
 
         let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
-            commands.create_application_command(|command| commands::ping::register(command))
+            dir_macros::register_commands!("bot/src/commands" "commands" "register(command)")
         }).await;
 
         tracing::info!("Guild commands created: {:#?}", commands);

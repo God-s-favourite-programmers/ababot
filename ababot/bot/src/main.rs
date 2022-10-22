@@ -1,8 +1,7 @@
 use std::env;
 
 use bot::Handler;
-use serenity::{Client, prelude::GatewayIntents};
-
+use serenity::{prelude::GatewayIntents, Client};
 
 #[tokio::main]
 async fn main() {
