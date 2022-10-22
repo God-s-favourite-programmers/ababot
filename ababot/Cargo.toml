@@ -1,1 +1,5 @@
 [workspace]
+members = [
+    "bot",
+    "dir_macros",
+]
