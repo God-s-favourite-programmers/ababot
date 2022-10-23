@@ -30,6 +30,11 @@ pub fn run(options: &[CommandDataOption]) -> String {
                 .unwrap_or(100);
         }
     }
+    if min > max {
+        let temp = min;
+        min = max;
+        max = temp;
+    }
     let mut rng = rand::thread_rng();
     rng.gen_range(min..max).to_string()
 }
