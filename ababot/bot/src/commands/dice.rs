@@ -10,7 +10,7 @@ use rand;
 
 pub fn run(options: &[CommandDataOption]) -> String {
     let mut min = 0;
-    let mut max = 100;
+    let mut max = 100; // Are you sure you know how standard dices works?
 
     for option in options {
         if option.name == "min" {
