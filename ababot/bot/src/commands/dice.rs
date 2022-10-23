@@ -35,6 +35,9 @@ pub fn run(options: &[CommandDataOption]) -> String {
         min = max;
         max = temp;
     }
+    else if min == max {
+        return format!("min: {} and max: {} is not a range", min, max);
+    }
     let mut rng = rand::thread_rng();
     rng.gen_range(min..max).to_string()
 }
