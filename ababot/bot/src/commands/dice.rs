@@ -36,7 +36,7 @@ pub fn run(options: &[CommandDataOption]) -> String {
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     let c = command
-        .name("Dice")
+        .name("dice")
         .description("Get a random number")
         .create_option(|option| {
             option
