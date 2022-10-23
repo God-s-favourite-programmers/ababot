@@ -1,1 +1,1 @@
-dir_macros::import!{"bot/src/commands"}
+dir_macros::import! {"bot/src/commands"}
