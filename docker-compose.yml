@@ -1,0 +1,19 @@
+version: "3.9"  # optional since v1.27.0
+services:
+  ababot:
+    image: areskiko/ababot:${PLATFORM}
+    restart: always
+
+    #volumes:
+      # Easier access to logs
+    
+    # Settings
+    environment:
+      - GUILD_ID =
+      - DISCORD_TOKEN =
+  
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 60

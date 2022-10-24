@@ -1,9 +1,13 @@
-FROM python:alpine
-COPY requirements.txt .
-RUN apk update && apk add gcc musl-dev
-RUN apk add tzdata
-RUN date
-RUN pip3 install -r requirements.txt
-COPY ./src/*.py ./
-COPY ./src/cogs/ ./src/cogs/
-CMD ["python3", "main.py"]
+FROM alpine as certifier
+
+RUN apk --no-cache add ca-certificates
+
+COPY ababot /ababot
+
+FROM scratch as run
+
+COPY --from=certifier /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=certifier /ababot /ababot
+
+
+CMD ["/ababot"]
