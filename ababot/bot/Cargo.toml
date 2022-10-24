@@ -5,7 +5,7 @@ edition = "2021"
 
 [features]
 default = ["dice"]
-dice = ["dep:rand"]
+dice = ["rand"]
 
 [dependencies]
 dir_macros = { path = "../dir_macros" }

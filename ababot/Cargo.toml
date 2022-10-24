@@ -3,3 +3,6 @@ members = [
     "bot",
     "dir_macros",
 ]
+
+[profile.release]
+strip = true
