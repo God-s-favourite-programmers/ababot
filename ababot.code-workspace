@@ -1,0 +1,14 @@
+{
+  "folders": [
+	{
+		"path": "ababot/bot"
+	},
+	{
+		"path": "ababot/dir_macros"
+	},
+	{
+		"path": "."
+	}
+],
+  "settings": {}
+}
