@@ -46,31 +46,11 @@ jobs:
       - name: Test
         run: cargo test
 
-  build:
-    name: Build project
-    runs-on: ubuntu-latest
-    environment: publishing
-    needs: [test, validate]
-    defaults:
-      run:
-        working-directory: ./ababot
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-        with: "./ababot -> target"
-      - name: Install rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - name: Test
-        run: cargo build
-
   push:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     environment: publishing
+    needs: [test]
     strategy:
       matrix:
         target: [arm/v7, amd64]
