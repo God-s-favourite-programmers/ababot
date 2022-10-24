@@ -100,7 +100,6 @@ pub fn run_commands(input: TokenStream) -> TokenStream {
     }
 }
 
-
 #[proc_macro]
 pub fn register_commands(input: TokenStream) -> TokenStream {
     let InvocationTarget {
@@ -119,7 +118,7 @@ pub fn register_commands(input: TokenStream) -> TokenStream {
     let mut output = String::from("commands\n");
     for name in names {
         output.push_str(&format!(
-                ".create_application_command(|command| {}::{}::{})\n",
+            ".create_application_command(|command| {}::{}::{})\n",
             rust_path.value(),
             name,
             function_name.value()
