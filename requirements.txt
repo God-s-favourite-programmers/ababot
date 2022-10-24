@@ -6,7 +6,7 @@ chardet==3.0.4
 discord==1.0.1
 discord.py==1.6.0
 idna==2.10
-multidict==4.7.6
+multidict==6.0.2
 requests==2.25.0
 soupsieve==2.2
 urllib3==1.26.2
