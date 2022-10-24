@@ -45,6 +45,8 @@ impl EventHandler for Handler {
             dir_macros::register_commands!("bot/src/commands" "commands" "register(command)")
         }).await;
 
+        println!("{} bot is connected!", ready.user.name);
+
         tracing::info!("Guild commands created: {:#?}", commands);
     }
 }

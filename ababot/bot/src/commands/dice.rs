@@ -72,4 +72,5 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
     {
         command
     }
+
 }
