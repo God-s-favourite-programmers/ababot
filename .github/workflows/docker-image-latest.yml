@@ -14,7 +14,7 @@ jobs:
         working-directory: ./ababot
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cache
         uses: Swatinem/rust-cache@v2
         with: 
@@ -36,7 +36,7 @@ jobs:
         working-directory: ./ababot
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cache
         uses: Swatinem/rust-cache@v2
         with: 
@@ -64,7 +64,7 @@ jobs:
         run: echo TARGET_LONG=x86_64-unknown-linux-musl >> $GITHUB_ENV && echo TAG=amd >> $GITHUB_ENV
         if: ${{ matrix.target == 'amd64' }}
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cache
         uses: Swatinem/rust-cache@v2
         with: 
