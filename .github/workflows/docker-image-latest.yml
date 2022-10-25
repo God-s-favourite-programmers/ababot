@@ -55,9 +55,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: publishing
     needs: [test]
-    defaults:
-      run:
-        working-directory: ababot
     strategy:
       matrix:
         target: [arm/v7, amd64]
@@ -87,6 +84,8 @@ jobs:
           toolchain: stable
       - name: Install cross
         run: cargo install cross
+      - name: ls
+        run: ls
       - name: Compile
         run: cross build --release --target ${{ env.TARGET_LONG }}
       - name: Move
