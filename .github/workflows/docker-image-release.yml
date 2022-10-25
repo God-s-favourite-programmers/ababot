@@ -57,9 +57,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: publishing
     needs: [test]
-    defaults:
-      run:
-        working-directory: ./ababot
     strategy:
       matrix:
         target: [arm/v7, amd64]
