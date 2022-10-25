@@ -86,8 +86,10 @@ jobs:
         run: cargo install cross
       - name: ls
         run: ls
+        working-directory: ababot
       - name: Compile
         run: cross build --release --target ${{ env.TARGET_LONG }}
+        working-directory: ababot
       - name: Move
         run: mv target/${{ env.TARGET_LONG }}/release/bot ../ababot.bin
 
