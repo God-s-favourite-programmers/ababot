@@ -55,6 +55,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: publishing
     needs: [test]
+    defaults:
+      run:
+        working-directory: ./ababot
     strategy:
       matrix:
         target: [arm/v7, amd64]
@@ -87,7 +90,7 @@ jobs:
       - name: Compile
         run: cross build --release --target ${{ env.TARGET_LONG }}
       - name: Move
-        run: mv target/${{ env.TARGET_LONG }}/release/bot ./ababot
+        run: mv target/${{ env.TARGET_LONG }}/release/bot ../ababot.bin
 
       - name: Build and push
         uses: docker/build-push-action@v3
