@@ -17,7 +17,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Cache
         uses: Swatinem/rust-cache@v2
-        with: "./ababot -> target"
+        with: 
+          workspaces: "./ababot -> target"
       - name: Install rust
         uses: actions-rs/toolchain@v1
         with:
@@ -38,7 +39,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Cache
         uses: Swatinem/rust-cache@v2
-        with: "./ababot -> target"
+        with: 
+          workspaces: "./ababot -> target"
       - name: Install rust
         uses: actions-rs/toolchain@v1
         with:
@@ -65,7 +67,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Cache
         uses: Swatinem/rust-cache@v2
-        with: "./ababot -> target"
+        with: 
+          workspaces: "./ababot -> target"
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to DockerHub
