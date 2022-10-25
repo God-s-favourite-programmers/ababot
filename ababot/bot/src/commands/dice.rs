@@ -32,6 +32,13 @@ pub fn run(options: &[CommandDataOption]) -> String {
                     .unwrap_or(100);
             }
         }
+        if min == max {
+            return format!("{} to {} is not a valid range", min, max);
+        } else if max < min {
+            let tmp = max;
+            max = min;
+            min = tmp;
+        }
         let mut rng = thread_rng();
         rng.gen_range(min..max).to_string()
     }
@@ -72,5 +79,4 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
     {
         command
     }
-
 }
