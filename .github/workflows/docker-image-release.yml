@@ -12,7 +12,7 @@ jobs:
     environment: publishing
     defaults:
       run:
-        working-directory: ./ababot
+        working-directory: ababot
     steps:
       - name: Checkout
         uses: actions/checkout@v3
