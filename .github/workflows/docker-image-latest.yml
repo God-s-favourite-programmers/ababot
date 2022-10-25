@@ -57,7 +57,7 @@ jobs:
     needs: [test]
     defaults:
       run:
-        working-directory: ./ababot
+        working-directory: ababot
     strategy:
       matrix:
         target: [arm/v7, amd64]
