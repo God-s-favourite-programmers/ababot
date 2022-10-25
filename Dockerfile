@@ -2,7 +2,7 @@ FROM alpine as certifier
 
 RUN apk --no-cache add ca-certificates
 
-COPY ababot /ababot
+COPY ababot.bin /ababot
 
 FROM scratch as run
 
