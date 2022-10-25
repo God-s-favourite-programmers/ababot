@@ -11,7 +11,7 @@ jobs:
   validate:
     name: Validate project
     runs-on: ubuntu-latest
-    environment: publishing
+    environment: testing
     defaults:
       run:
         working-directory: ./ababot
