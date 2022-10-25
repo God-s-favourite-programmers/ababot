@@ -8,6 +8,26 @@ on:
     branches: [ main ]
 
 jobs:
+  validate:
+    name: Validate project
+    runs-on: ubuntu-latest
+    environment: publishing
+    defaults:
+      run:
+        working-directory: ./ababot
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with: "./ababot -> target"
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Validate
+        run: cargo check
+
   test:
     name: Test project
     runs-on: ubuntu-latest
