@@ -45,8 +45,10 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: Test
-        run: cargo test
+      - name: Test macros
+        run: cargo test dir_macros
+      - name: Test bot
+        run: cargo test bot
 
   push:
     name: Push Docker image to Docker Hub
