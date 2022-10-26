@@ -6,6 +6,7 @@ use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 
 pub mod commands;
+pub mod types;
 
 pub struct Handler;
 

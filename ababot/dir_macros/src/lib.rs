@@ -89,7 +89,7 @@ pub fn run_commands(input: TokenStream) -> TokenStream {
             name,
             rust_path.value(),
             name,
-            function_name.value()
+            format!("{}.await", function_name.value())
         ))
     }
     output.push_str("_ => \"Unrecognized command\".to_string()\n}");
