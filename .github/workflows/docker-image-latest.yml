@@ -90,6 +90,7 @@ jobs:
         run: cross build --release --target ${{ env.TARGET_LONG }}
       - name: Move
         run: mv target/${{ env.TARGET_LONG }}/release/bot ../ababot.bin
+        working-directory: ababot
 
       - name: Build and push
         uses: docker/build-push-action@v3
