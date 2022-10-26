@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use yahoo_finance_api::{Quote};
+use yahoo_finance_api::Quote;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Stonk {
@@ -25,4 +25,3 @@ impl From<&Quote> for Stonk {
         }
     }
 }
-

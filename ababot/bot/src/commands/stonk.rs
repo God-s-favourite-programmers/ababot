@@ -1,25 +1,29 @@
 use crate::types::stonk::Stonk;
 use serenity::{
     builder::CreateApplicationCommand,
-    model::prelude::{interaction::application_command::CommandDataOption, command::CommandOptionType},
+    model::prelude::{
+        command::CommandOptionType, interaction::application_command::CommandDataOption,
+    },
 };
 use yahoo_finance_api as yahoo;
-
 
 pub async fn run(options: &[CommandDataOption]) -> String {
     let mut stonk: String = String::new();
     for opt in options {
         if opt.name == "ticker" {
-            let ticker = opt.value.as_ref().map(|v| v.as_str()).flatten().unwrap_or("AAPL");
-            println!("Ticker: {}", ticker);
+            let ticker = opt
+                .value
+                .as_ref()
+                .map(|v| v.as_str())
+                .flatten()
+                .unwrap_or("AAPL");
             let stonk_history = get_last_stonk(ticker).await;
-            println!("{:?}", stonk_history);
-            let first:String = match stonk_history {
+            let first: String = match stonk_history {
                 Ok(stonk) => stonk.close.to_string(),
                 Err(e) => {
                     println!("Error: {}", e);
-                    return "No stonks found".to_string()
-                },
+                    return "No stonks found".to_string();
+                }
             };
             stonk = format!("{}: {}", opt.value.as_ref().unwrap(), first);
         }
