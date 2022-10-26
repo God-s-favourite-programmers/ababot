@@ -69,6 +69,37 @@ impl Parse for InvocationTarget {
 }
 
 #[proc_macro]
+pub fn run_commands_async(input: TokenStream) -> TokenStream {
+    let InvocationTarget {
+        directory,
+        rust_path,
+        function_name,
+    } = parse_macro_input!(input as InvocationTarget);
+
+    let dir = match fs::read_dir(directory.value()) {
+        Ok(dir) => dir,
+        Err(e) => panic!("{}", e),
+    };
+
+    let names = get_file_names(dir);
+    let mut output = String::from(" match input {\n");
+    for name in names {
+        output.push_str(&format!(
+            "\"{}\" => {}::{}::{},\n",
+            name,
+            rust_path.value(),
+            name,
+            format!("{}.await", function_name.value())
+        ))
+    }
+    output.push_str("_ => \"Unrecognized command\".to_string()\n}");
+
+    match output.parse() {
+        Ok(tok_stream) => tok_stream,
+        Err(e) => panic!("Error parsing: {}", e),
+    }
+}
+#[proc_macro]
 pub fn run_commands(input: TokenStream) -> TokenStream {
     let InvocationTarget {
         directory,

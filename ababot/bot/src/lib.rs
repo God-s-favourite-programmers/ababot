@@ -6,6 +6,7 @@ use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 
 pub mod commands;
+pub mod types;
 
 pub struct Handler;
 
@@ -16,7 +17,7 @@ impl EventHandler for Handler {
             tracing::debug!("Received command interaction {:#?}", command);
 
             let input = command.data.name.as_str();
-            let content = dir_macros::run_commands!("bot/src/commands" "commands" "run(&command.data.options)");
+            let content = dir_macros::run_commands_async!("bot/src/commands" "commands" "run(&command.data.options)");
 
             if let Err(why) = command
                 .create_interaction_response(&ctx.http, |response| {

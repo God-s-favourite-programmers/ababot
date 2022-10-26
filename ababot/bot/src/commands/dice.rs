@@ -8,7 +8,7 @@ use serenity::{
 #[cfg(feature = "dice")]
 use rand::{thread_rng, Rng};
 
-pub fn run(options: &[CommandDataOption]) -> String {
+pub async fn run(options: &[CommandDataOption]) -> String {
     #[cfg(feature = "dice")]
     {
         let mut min = 0;
