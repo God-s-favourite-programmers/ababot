@@ -2,14 +2,19 @@ use crate::types::stonk::Stonk;
 use serenity::{
     builder::CreateApplicationCommand,
     model::prelude::{
-        command::CommandOptionType, interaction::application_command::CommandDataOption,
+        command::CommandOptionType,
+        interaction::{
+            application_command::{ApplicationCommandInteraction, CommandDataOption},
+            InteractionResponseType,
+        },
     },
+    prelude::Context,
 };
 use yahoo_finance_api as yahoo;
 
-pub async fn run(options: &[CommandDataOption]) -> String {
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut stonk: String = String::new();
-    for opt in options {
+    for opt in &command.data.options {
         if opt.name == "ticker" {
             let ticker = opt
                 .value
@@ -22,13 +27,22 @@ pub async fn run(options: &[CommandDataOption]) -> String {
                 Ok(stonk) => stonk.close.to_string(),
                 Err(e) => {
                     println!("Error: {}", e);
-                    return "No stonks found".to_string();
+                    "No stonks found".to_string()
                 }
             };
             stonk = format!("{}: {}", opt.value.as_ref().unwrap(), first);
         }
     }
-    stonk
+    if let Err(why) = command
+        .create_interaction_response(&ctx.http, |response| {
+            response
+                .kind(InteractionResponseType::ChannelMessageWithSource)
+                .interaction_response_data(|message| message.content(stonk))
+        })
+        .await
+    {
+        tracing::warn!("Failed to run command: {}", why);
+    }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
