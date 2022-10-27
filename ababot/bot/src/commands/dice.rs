@@ -52,7 +52,7 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
     #[cfg(feature = "dice")]
     {
         let c = command
-            .name("Dice")
+            .name("dice")
             .description("Get a random number")
             .create_option(|option| {
                 option
