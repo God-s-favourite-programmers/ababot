@@ -4,8 +4,7 @@ use serenity::{
     model::prelude::{
         command::CommandOptionType,
         interaction::{
-            application_command::{ApplicationCommandInteraction, CommandDataOption},
-            InteractionResponseType,
+            application_command::ApplicationCommandInteraction, InteractionResponseType,
         },
     },
     prelude::Context,
