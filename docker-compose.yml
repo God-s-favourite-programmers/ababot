@@ -9,8 +9,8 @@ services:
     
     # Settings
     environment:
-      - GUILD_ID =
-      - DISCORD_TOKEN =
+      - GUILD_ID=
+      - DISCORD_TOKEN=
   
   watchtower:
     image: containrrr/watchtower

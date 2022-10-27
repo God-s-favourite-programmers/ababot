@@ -84,9 +84,6 @@ jobs:
           toolchain: stable
       - name: Install cross
         run: cargo install cross
-      - name: ls
-        run: ls
-        working-directory: ababot
       - name: Compile
         run: cross build --release --target ${{ env.TARGET_LONG }}
         working-directory: ababot
