@@ -4,8 +4,8 @@ services:
     image: areskiko/ababot:${PLATFORM}
     restart: always
 
-    #volumes:
-      # Easier access to logs
+    volumes:
+      - ababot_logvolume:/var/log/  
     
     # Settings
     environment:
@@ -17,3 +17,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --interval 60
+
+volumes:
+  ababot_logvolume:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/var/log/ababot'
