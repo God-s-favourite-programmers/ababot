@@ -11,6 +11,7 @@ services:
     environment:
       - GUILD_ID=
       - DISCORD_TOKEN=
+      - LOG_LEVEL=info # defaults to info
   
   watchtower:
     image: containrrr/watchtower
