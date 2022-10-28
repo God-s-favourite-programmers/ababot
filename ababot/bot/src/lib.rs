@@ -7,6 +7,7 @@ use serenity::prelude::{Context, EventHandler};
 
 pub mod commands;
 pub mod types;
+pub mod utils;
 
 pub struct Handler;
 
@@ -16,15 +17,15 @@ async fn nop() {}
 impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
-            tracing::debug!("Received command interaction {:#?}", command);
-
             let input = command.data.name.as_str();
+
+            tracing::debug!("Executing command {input}");
             dir_macros::run_commands_async!("bot/src/commands" "commands" "run(&ctx,&command)");
         }
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
-        tracing::info!("Connected as {}", ready.user.name);
+        tracing::info!("Connecting as {}", ready.user.name);
 
         let guild_id = GuildId(
             env::var("GUILD_ID")
@@ -33,17 +34,16 @@ impl EventHandler for Handler {
                 .expect("GUILD_ID must be an integer"),
         );
 
+        tracing::debug!("Got Guild Id: {}", &guild_id);
+
         let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
             dir_macros::register_commands!("bot/src/commands" "commands" "register(command)")
         }).await;
 
         match commands {
-            Ok(_) => {},
-            Err(e) => eprintln!("{:?}", e)
+            Ok(_) => {tracing::debug!("Command registration succeeded")}
+            Err(e) => {eprintln!("{:?}", e); tracing::error!("Command registration failed: {:?}", e)},
         }
-
-        println!("{} bot is connected!", ready.user.name);
-
-        //tracing::info!("Guild commands created: {:#?}", commands);
+        tracing::info!("Setup complete");
     }
 }

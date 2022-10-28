@@ -5,7 +5,9 @@ use serenity::{
     },
     prelude::Context,
 };
+use tracing::instrument;
 
+#[instrument(skip(ctx, command))]
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let ans = "Come in".to_string();
     if let Err(why) = command
@@ -21,5 +23,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    tracing::debug!("Registering command knock");
     command.name("knock").description("Knock knock")
 }

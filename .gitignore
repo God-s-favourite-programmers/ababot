@@ -2,3 +2,4 @@
 .vscode/settings.json
 **/target
 .env
+tags
