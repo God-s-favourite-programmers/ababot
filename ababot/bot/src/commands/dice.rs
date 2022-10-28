@@ -11,7 +11,9 @@ use serenity::{
 
 #[cfg(feature = "dice")]
 use rand::{thread_rng, Rng};
+use tracing::instrument;
 
+#[instrument(skip(ctx, command))]
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     #[cfg(feature = "dice")]
     {
@@ -69,7 +71,8 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     #[cfg(feature = "dice")]
     {
-        let c = command
+        tracing::debug!("Registering command dice");
+        command
             .name("dice")
             .description("Get a random number")
             .create_option(|option| {
@@ -89,9 +92,7 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                     .min_int_value(1)
                     .max_int_value(100)
                     .required(false)
-            });
-        tracing::debug!("Registered Dice command");
-        c
+            })
     }
     #[cfg(not(feature = "dice"))]
     {

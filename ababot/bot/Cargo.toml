@@ -8,12 +8,33 @@ default = ["dice"]
 dice = ["rand"]
 
 [dependencies]
+### General dependencies
+
+# Macros to automate command invocations
 dir_macros = { path = "../dir_macros" }
+
+# Interface with the Discord API
 serenity = { version = "0.11", default-features = false, features = ["client", "builder", "model", "http", "gateway", "client", "cache", "utils", "rustls_backend"] }
+
+# Better logging
 tracing = "0.1"
+tracing-subscriber = { version = "0.3" }
+tracing-appender = { version = "0.2" }
+
+# Async code
 tokio = { version = "1", features =  ["full"] }
-rand = { version = "0.8", optional = true }
+
+# Serialization and Deserialization
 serde = "1.0.0"
 serde_json = "1.0.0"
-yahoo_finance_api = "=1.2.2"
+
+# Allows the usage of openssl with cross
 openssl = { version = '0.10', features = ["vendored"] }
+
+### Command dependencies
+
+# Generate random numbers for dice command
+rand = { version = "0.8", optional = true }
+
+# Interface with Yahoo API for stonk command
+yahoo_finance_api = "=1.2.2"

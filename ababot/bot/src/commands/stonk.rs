@@ -9,8 +9,10 @@ use serenity::{
     },
     prelude::Context,
 };
+use tracing::instrument;
 use yahoo_finance_api as yahoo;
 
+#[instrument(skip(ctx, command))]
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut stonk: String = String::new();
     for opt in &command.data.options {
@@ -25,7 +27,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             let first: String = match stonk_history {
                 Ok(stonk) => stonk.close.to_string(),
                 Err(e) => {
-                    println!("Error: {}", e);
+                    tracing::debug!("Could not find stonk {}: {}", ticker, e);
                     "No stonks found".to_string()
                 }
             };
@@ -45,6 +47,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    tracing::debug!("Registering command stonk");
     command
         .name("stonk")
         .description("When you need stonk")
@@ -57,6 +60,7 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
         })
 }
 
+#[instrument(level = "debug")]
 pub async fn get_latest_stonks(stonk_name: &str) -> Result<Vec<Stonk>, Box<dyn std::error::Error>> {
     let provider = yahoo::YahooConnector::new();
     let resp = provider
@@ -68,6 +72,8 @@ pub async fn get_latest_stonks(stonk_name: &str) -> Result<Vec<Stonk>, Box<dyn s
         .collect();
     Ok(resp)
 }
+
+#[instrument(level = "debug")]
 pub async fn get_last_stonk(stonk_name: &str) -> Result<Stonk, Box<dyn std::error::Error>> {
     let provider = yahoo::YahooConnector::new();
     let resp = provider.get_latest_quotes(stonk_name, "1m").await?;

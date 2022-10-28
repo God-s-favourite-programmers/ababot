@@ -1,10 +1,15 @@
 use std::env;
 
-use bot::Handler;
+use bot::{Handler, utils};
 use serenity::{prelude::GatewayIntents, Client};
 
 #[tokio::main]
 async fn main() {
+    let (subscriber, _guard) = utils::get_logger();
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("Failed to set global default subscriber");
+    tracing::trace!("Log setup complete");
+
     // Configure the client with your Discord bot token in the environment.
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
 
@@ -19,6 +24,6 @@ async fn main() {
     // Shards will automatically attempt to reconnect, and will perform
     // exponential backoff until it reconnects.
     if let Err(why) = client.start().await {
-        println!("Client error: {:?}", why);
+        tracing::error!("Error running client: {why}");
     }
 }
