@@ -92,7 +92,7 @@ pub fn run_commands_async(input: TokenStream) -> TokenStream {
             format!("{}.await", function_name.value())
         ))
     }
-    output.push_str("_ => \"Unrecognized command\".to_string()\n}");
+    output.push_str("_ => nop().await\n}");
 
     match output.parse() {
         Ok(tok_stream) => tok_stream,

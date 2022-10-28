@@ -1,20 +1,24 @@
 use serenity::{
     builder::CreateApplicationCommand,
     model::prelude::{
-        command::CommandOptionType, interaction::application_command::CommandDataOption,
+        command::CommandOptionType,
+        interaction::{
+            application_command::ApplicationCommandInteraction, InteractionResponseType,
+        },
     },
+    prelude::Context,
 };
 
 #[cfg(feature = "dice")]
 use rand::{thread_rng, Rng};
 
-pub async fn run(options: &[CommandDataOption]) -> String {
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     #[cfg(feature = "dice")]
     {
         let mut min = 0;
         let mut max = 100;
 
-        for option in options {
+        for option in &command.data.options {
             if option.name == "min" {
                 min = option
                     .value
@@ -32,16 +36,30 @@ pub async fn run(options: &[CommandDataOption]) -> String {
                     .unwrap_or(100);
             }
         }
-        if min == max {
-            return format!("{} to {} is not a valid range", min, max);
-        } else if max < min {
+        let dice_roll;
+        if max < min {
             let tmp = max;
             max = min;
             min = tmp;
         }
-        let mut rng = thread_rng();
-        rng.gen_range(min..max).to_string()
+        if min == max {
+            dice_roll = format!("{} to {} is not a valid range", min, max);
+        } else {
+            let mut rng = thread_rng();
+            dice_roll = rng.gen_range(min..max).to_string();
+        }
+        if let Err(why) = command
+            .create_interaction_response(&ctx.http, |response| {
+                response
+                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                    .interaction_response_data(|message| message.content(dice_roll))
+            })
+            .await
+        {
+            tracing::warn!("Failed to run command: {}", why);
+        }
     }
+    // Feature noe deprecated, fix before merge
     #[cfg(not(feature = "dice"))]
     {
         "Command disabled".to_string()

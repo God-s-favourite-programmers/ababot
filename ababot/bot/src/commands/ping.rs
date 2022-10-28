@@ -1,10 +1,23 @@
 use serenity::{
     builder::CreateApplicationCommand,
-    model::prelude::interaction::application_command::CommandDataOption,
+    model::prelude::interaction::{
+        application_command::ApplicationCommandInteraction, InteractionResponseType,
+    },
+    prelude::Context,
 };
 
-pub async fn run(_options: &[CommandDataOption]) -> String {
-    "Pong!".to_string()
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
+    let pong = "Pong!".to_string();
+    if let Err(why) = command
+        .create_interaction_response(&ctx.http, |response| {
+            response
+                .kind(InteractionResponseType::ChannelMessageWithSource)
+                .interaction_response_data(|message| message.content(pong))
+        })
+        .await
+    {
+        tracing::warn!("Failed to run command: {}", why);
+    }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
