@@ -20,17 +20,6 @@ impl EventHandler for Handler {
 
             let input = command.data.name.as_str();
             dir_macros::run_commands_async!("bot/src/commands" "commands" "run(&ctx,&command)");
-
-            // if let Err(why) = command
-            //     .create_interaction_response(&ctx.http, |response| {
-            //         response
-            //             .kind(InteractionResponseType::ChannelMessageWithSource)
-            //             .interaction_response_data(|message| message.content(content))
-            //     })
-            //     .await
-            // {
-            //     tracing::warn!("Failed to run command {}: {}", input, why);
-            // }
         }
     }
 
