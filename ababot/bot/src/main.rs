@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, env};
+use std::env;
 
 use bot::{utils, Handler};
 use serenity::{prelude::GatewayIntents, Client};
