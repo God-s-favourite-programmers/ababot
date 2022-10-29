@@ -6,6 +6,7 @@ use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 
 pub mod commands;
+pub mod database;
 pub mod types;
 pub mod utils;
 
@@ -41,8 +42,13 @@ impl EventHandler for Handler {
         }).await;
 
         match commands {
-            Ok(_) => {tracing::debug!("Command registration succeeded")}
-            Err(e) => {eprintln!("{:?}", e); tracing::error!("Command registration failed: {:?}", e)},
+            Ok(_) => {
+                tracing::debug!("Command registration succeeded")
+            }
+            Err(e) => {
+                eprintln!("{:?}", e);
+                tracing::error!("Command registration failed: {:?}", e)
+            }
         }
         tracing::info!("Setup complete");
     }

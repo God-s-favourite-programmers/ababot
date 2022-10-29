@@ -36,5 +36,8 @@ openssl = { version = '0.10', features = ["vendored"] }
 # Generate random numbers for dice command
 rand = { version = "0.8", optional = true }
 
+# Datebase
+surrealdb = "1.0.0-beta.8"
+
 # Interface with Yahoo API for stonk command
 yahoo_finance_api = "=1.2.2"

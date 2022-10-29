@@ -1,6 +1,6 @@
-use std::env;
+use std::{collections::BTreeMap, env};
 
-use bot::{Handler, utils};
+use bot::{utils, Handler};
 use serenity::{prelude::GatewayIntents, Client};
 
 #[tokio::main]

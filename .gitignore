@@ -3,3 +3,5 @@
 **/target
 .env
 tags
+var/
+ababot_database/
