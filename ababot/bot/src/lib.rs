@@ -8,6 +8,7 @@ use serenity::model::prelude::{GuildId, Ready, ChannelId};
 use serenity::prelude::{Context, EventHandler};
 
 pub mod commands;
+pub mod background_tasks;
 pub mod types;
 pub mod utils;
 

@@ -1,8 +1,7 @@
-use core::panic;
 use std::fs::{self, ReadDir};
 
 use proc_macro::TokenStream;
-use syn::{parse::Parse, parse_macro_input, LitStr};
+use syn::{parse::Parse, parse_macro_input, LitStr, token::Token};
 
 fn get_file_names(dir: ReadDir) -> Vec<String> {
     let mut names = Vec::new();
@@ -99,6 +98,35 @@ pub fn run_commands_async(input: TokenStream) -> TokenStream {
         Err(e) => panic!("Error parsing: {}", e),
     }
 }
+
+#[proc_macro]
+pub fn long_running(input: TokenStream) -> TokenStream {
+    let InvocationTarget {
+        directory,
+        rust_path,
+        function_name,
+    } = parse_macro_input!(input as InvocationTarget);
+
+    let dir = match fs::read_dir(directory.value()) {
+        Ok(dir) => dir,
+        Err(e) => panic!("{}", e),
+    };
+
+    let names = get_file_names(dir);
+    let mut output = String::new();
+    for name in names {
+        output.push_str(&format!(
+            "let ctx_cpy = Arc::clone(&ctx);\ntokio::spawn(async move {{{}::{}::{}.await}}",
+            rust_path.value(),
+            name,
+            function_name.value()
+        ))
+    }
+
+    "".parse().unwrap()
+}
+
+
 #[proc_macro]
 pub fn run_commands(input: TokenStream) -> TokenStream {
     let InvocationTarget {
