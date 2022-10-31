@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool};
 
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
-use serenity::model::prelude::{GuildId, Ready, ChannelId};
+use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 
 pub mod commands;
@@ -37,8 +37,7 @@ impl EventHandler for Handler {
         // Utenfor makro
         let ctx = Arc::new(ctx);
 
-        dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy");
-
+        dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(&*ctx_cpy)");
         let guild_id = GuildId(
             env::var("GUILD_ID")
                 .expect("Expected GUILD_ID in environment")

@@ -1,7 +1,7 @@
 use std::fs::{self, ReadDir};
 
 use proc_macro::TokenStream;
-use syn::{parse::Parse, parse_macro_input, LitStr, token::Token};
+use syn::{parse::Parse, parse_macro_input, LitStr};
 
 fn get_file_names(dir: ReadDir) -> Vec<String> {
     let mut names = Vec::new();
@@ -116,7 +116,10 @@ pub fn long_running(input: TokenStream) -> TokenStream {
     let mut output = String::new();
     for name in names {
         output.push_str(&format!(
-            "let ctx_cpy = Arc::clone(&ctx);\ntokio::spawn(async move {{{}::{}::{}.await}});",
+            "let ctx_cpy = Arc::clone(&ctx);
+            \ntokio::spawn(async move {{
+                {}::{}::{}.await;
+            }});",
             rust_path.value(),
             name,
             function_name.value()
@@ -125,7 +128,6 @@ pub fn long_running(input: TokenStream) -> TokenStream {
 
     output.parse().unwrap()
 }
-
 
 #[proc_macro]
 pub fn run_commands(input: TokenStream) -> TokenStream {
