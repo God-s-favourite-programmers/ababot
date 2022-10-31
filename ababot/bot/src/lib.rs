@@ -33,16 +33,22 @@ impl EventHandler for Handler {
         tracing::info!("Connecting as {}", ready.user.name);
 
         // Check should not be neccessary as ready is only called once
-        let og_ctx = Arc::new(ctx);
-        let ctx_copy = Arc::clone(&og_ctx);
-            tokio::spawn(async move {
-                ChannelId(772092284153757719).send_message(&ctx_copy.http, |m| {
+        // Utenfor makro
+        let ctx = Arc::new(ctx);
+
+        // Begyn makro element
+        // En thread for hver bakgrunnsaktivitet
+        // Må ha unikt navn per element
+        let ctx_copy = Arc::clone(&ctx);
+        tokio::spawn(async move {
+            ChannelId(772092284153757719).send_message(&ctx_copy.http, |m| {
                     m.embed(|e| {
                         e.title("Asyncly doing shit")
                         .field("Async", "Async is coool", false)
                     })
                 }).await
             });
+        // Slutt makro element
 
         let guild_id = GuildId(
             env::var("GUILD_ID")
@@ -53,7 +59,7 @@ impl EventHandler for Handler {
 
         tracing::debug!("Got Guild Id: {}", &guild_id);
 
-        let commands = GuildId::set_application_commands(&guild_id, &og_ctx.http, |commands| {
+        let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
             dir_macros::register_commands!("bot/src/commands" "commands" "register(command)")
         }).await;
 
