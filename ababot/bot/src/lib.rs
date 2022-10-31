@@ -37,7 +37,7 @@ impl EventHandler for Handler {
         // Utenfor makro
         let ctx = Arc::new(ctx);
 
-        dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(&*ctx_cpy)");
+        dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
         let guild_id = GuildId(
             env::var("GUILD_ID")
                 .expect("Expected GUILD_ID in environment")
