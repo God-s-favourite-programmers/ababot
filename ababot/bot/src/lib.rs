@@ -37,19 +37,7 @@ impl EventHandler for Handler {
         // Utenfor makro
         let ctx = Arc::new(ctx);
 
-        // Begyn makro element
-        // En thread for hver bakgrunnsaktivitet
-        // Må ha unikt navn per element
-        let ctx_copy = Arc::clone(&ctx);
-        tokio::spawn(async move {
-            ChannelId(772092284153757719).send_message(&ctx_copy.http, |m| {
-                    m.embed(|e| {
-                        e.title("Asyncly doing shit")
-                        .field("Async", "Async is coool", false)
-                    })
-                }).await
-            });
-        // Slutt makro element
+        dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy");
 
         let guild_id = GuildId(
             env::var("GUILD_ID")

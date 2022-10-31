@@ -116,14 +116,14 @@ pub fn long_running(input: TokenStream) -> TokenStream {
     let mut output = String::new();
     for name in names {
         output.push_str(&format!(
-            "let ctx_cpy = Arc::clone(&ctx);\ntokio::spawn(async move {{{}::{}::{}.await}}",
+            "let ctx_cpy = Arc::clone(&ctx);\ntokio::spawn(async move {{{}::{}::{}.await}});",
             rust_path.value(),
             name,
             function_name.value()
         ))
     }
 
-    "".parse().unwrap()
+    output.parse().unwrap()
 }
 
 
