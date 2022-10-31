@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, sync::atomic::AtomicBool};
 
 use bot::{Handler, utils};
 use serenity::{prelude::GatewayIntents, Client};
@@ -15,7 +15,9 @@ async fn main() {
 
     // Build our client.
     let mut client = Client::builder(token, GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT)
-        .event_handler(Handler)
+        .event_handler(Handler {
+            loop_running: AtomicBool::new(false),
+        })
         .await
         .expect("Error creating client");
 

@@ -1,15 +1,19 @@
 use std::env;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool};
 
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
-use serenity::model::prelude::{GuildId, Ready};
+use serenity::model::prelude::{GuildId, Ready, ChannelId};
 use serenity::prelude::{Context, EventHandler};
 
 pub mod commands;
 pub mod types;
 pub mod utils;
 
-pub struct Handler;
+pub struct Handler {
+    pub loop_running: AtomicBool,
+}
 
 async fn nop() {}
 
@@ -25,7 +29,20 @@ impl EventHandler for Handler {
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
+        println!("Bot ready");
         tracing::info!("Connecting as {}", ready.user.name);
+
+        // Check should not be neccessary as ready is only called once
+        let og_ctx = Arc::new(ctx);
+        let ctx_copy = Arc::clone(&og_ctx);
+            tokio::spawn(async move {
+                ChannelId(772092284153757719).send_message(&ctx_copy.http, |m| {
+                    m.embed(|e| {
+                        e.title("Asyncly doing shit")
+                        .field("Async", "Async is coool", false)
+                    })
+                }).await
+            });
 
         let guild_id = GuildId(
             env::var("GUILD_ID")
@@ -36,7 +53,7 @@ impl EventHandler for Handler {
 
         tracing::debug!("Got Guild Id: {}", &guild_id);
 
-        let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+        let commands = GuildId::set_application_commands(&guild_id, &og_ctx.http, |commands| {
             dir_macros::register_commands!("bot/src/commands" "commands" "register(command)")
         }).await;
 

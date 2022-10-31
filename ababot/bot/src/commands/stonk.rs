@@ -20,8 +20,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             let ticker = opt
                 .value
                 .as_ref()
-                .map(|v| v.as_str())
-                .flatten()
+                .and_then(|v| v.as_str())
                 .unwrap_or("AAPL");
             let stonk_history = get_last_stonk(ticker).await;
             let first: String = match stonk_history {
@@ -68,7 +67,7 @@ pub async fn get_latest_stonks(stonk_name: &str) -> Result<Vec<Stonk>, Box<dyn s
         .await?
         .quotes()?
         .iter()
-        .map(|quote| Stonk::from(quote))
+        .map(Stonk::from)
         .collect();
     Ok(resp)
 }

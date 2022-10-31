@@ -16,7 +16,7 @@ fn get_file_names(dir: ReadDir) -> Vec<String> {
                         if name == "mod.rs" || !name.ends_with(".rs") {
                             continue;
                         }
-                        let sanitized = name.split(".").next().unwrap();
+                        let sanitized = name.split('.').next().unwrap();
                         names.push(sanitized.to_string());
                     }
                     None => panic!("Invalid file name: {:?}", os_name),
@@ -85,11 +85,11 @@ pub fn run_commands_async(input: TokenStream) -> TokenStream {
     let mut output = String::from(" match input {\n");
     for name in names {
         output.push_str(&format!(
-            "\"{}\" => {}::{}::{},\n",
+            "\"{}\" => {}::{}::{}.await,\n",
             name,
             rust_path.value(),
             name,
-            format!("{}.await", function_name.value())
+            function_name.value()
         ))
     }
     output.push_str("_ => nop().await\n}");
