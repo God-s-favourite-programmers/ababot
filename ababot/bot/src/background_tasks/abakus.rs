@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serenity::{model::prelude::ChannelId, prelude::Context, builder::CreateMessage};
+use serenity::{model::prelude::ChannelId, prelude::Context};
 use tokio::time::sleep;
 
 const _EVENT_URL: &str = "https://abakus.no/events/";
@@ -42,15 +42,13 @@ impl From<ApiEvent> for Event {
 }
 
 pub async fn run(ctx: Arc<Context>) {
-    // Wait til 13:00 local time
-
     //TODO: spawn another thread to watch for reactions to messages
 
     loop {
         let now = chrono::Local::now();
-        let mut target = chrono::Local::today().and_hms(22, 26, 15);
+        let mut target = chrono::Local::today().and_hms(22, 26, 15); // Time used for testing. Prod maybe 09:00?
         if now > target {
-            target = target + chrono::Duration::days(1);
+            target += chrono::Duration::days(1);
         }
         let duration = (target - now).to_std().unwrap();
         sleep(duration).await;
@@ -64,7 +62,6 @@ pub async fn run(ctx: Arc<Context>) {
         };
 
         let events = parse_events(fetched_data);
-
 
         for event in events {
             let channel_message = ChannelId(772092284153757719)
@@ -121,4 +118,3 @@ fn parse_events(events: String) -> Vec<Event> {
 
     events.into_iter().map(|e| e.into()).collect()
 }
-
