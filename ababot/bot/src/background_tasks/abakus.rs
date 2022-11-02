@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serenity::{model::prelude::ChannelId, prelude::Context, builder::CreateMessage};
 use tokio::time::sleep;
 
-const EVENT_URL: &str = "https://abakus.no/events/";
+const _EVENT_URL: &str = "https://abakus.no/events/";
 #[derive(Serialize, Deserialize, Debug)]
 struct ApiEvent {
     title: Option<String>,
