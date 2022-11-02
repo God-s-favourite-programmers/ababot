@@ -1,14 +1,14 @@
 use std::env;
+use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool};
 
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 
-pub mod commands;
 pub mod background_tasks;
+pub mod commands;
 pub mod types;
 pub mod utils;
 
@@ -37,7 +37,6 @@ impl EventHandler for Handler {
         // Utenfor makro
         let ctx = Arc::new(ctx);
 
-
         // Every background task has to handle its own setup, executing, and contiguos execution
         dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
         let guild_id = GuildId(
@@ -54,8 +53,13 @@ impl EventHandler for Handler {
         }).await;
 
         match commands {
-            Ok(_) => {tracing::debug!("Command registration succeeded")}
-            Err(e) => {eprintln!("{:?}", e); tracing::error!("Command registration failed: {:?}", e)},
+            Ok(_) => {
+                tracing::debug!("Command registration succeeded")
+            }
+            Err(e) => {
+                eprintln!("{:?}", e);
+                tracing::error!("Command registration failed: {:?}", e)
+            }
         }
         tracing::info!("Setup complete");
     }

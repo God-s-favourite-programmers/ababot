@@ -38,3 +38,6 @@ rand = { version = "0.8", optional = true }
 
 # Interface with Yahoo API for stonk command
 yahoo_finance_api = "=1.2.2"
+
+# Time
+chrono = "0.4"

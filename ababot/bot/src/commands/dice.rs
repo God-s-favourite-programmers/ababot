@@ -24,11 +24,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 
         for option in &command.data.options {
             if option.name == "min" {
-                min = option
-                    .value
-                    .as_ref()
-                    .and_then(|v| v.as_i64())
-                    .unwrap_or(0);
+                min = option.value.as_ref().and_then(|v| v.as_i64()).unwrap_or(0);
             }
             if option.name == "max" {
                 max = option
