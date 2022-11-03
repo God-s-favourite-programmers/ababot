@@ -47,6 +47,26 @@ impl From<ApiEvent> for Event {
     }
 }
 
+pub async fn run(ctx: Arc<Context>) {
+    //TODO: spawn another thread to watch for reactions to messages
+
+    let today = chrono::offset::Local::now().date();
+    let next_monday_offset = today.weekday().num_days_from_monday();
+    let mut next_monday = today;
+    for _ in 0..next_monday_offset {
+        next_monday = next_monday.succ()
+    }
+
+    schedule(
+        Time::EveryDeltaStartAt(
+            std::time::Duration::from_secs(WEEK_AS_SECONDS),
+            next_monday.and_hms(8, 0, 0),
+        ),
+        || async { fetch_and_send(ctx.clone()).await },
+    )
+    .await
+}
+
 pub async fn fetch_and_send(ctx: Arc<Context>) {
     let fetched_data = match fetch().await {
         Ok(v) => v,
@@ -77,25 +97,6 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
     }
 }
 
-pub async fn run(ctx: Arc<Context>) {
-    //TODO: spawn another thread to watch for reactions to messages
-
-    let today = chrono::offset::Local::now().date();
-    let next_monday_offset = today.weekday().num_days_from_monday();
-    let mut next_monday = today;
-    for _ in 0..next_monday_offset {
-        next_monday = next_monday.succ()
-    }
-
-    schedule(
-        Time::EveryDeltaStartAt(
-            std::time::Duration::from_secs(WEEK_AS_SECONDS),
-            next_monday.and_hms(8, 0, 0),
-        ),
-        || async { fetch_and_send(ctx.clone()).await },
-    )
-    .await
-}
 
 async fn fetch() -> Result<String, Box<dyn std::error::Error>> {
     let client = Client::new();

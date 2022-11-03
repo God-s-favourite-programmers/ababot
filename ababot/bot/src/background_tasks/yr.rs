@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
-use chrono::{DateTime, NaiveDateTime, Timelike, Utc};
+use chrono::{DateTime, NaiveDateTime, Timelike, Utc, Local};
 use serde::{Deserialize, Serialize};
 use serenity::{model::prelude::ChannelId, prelude::Context};
-use tokio::time::sleep;
+
+use crate::utils::{schedule, Time};
 
 const URL: &str =
     "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.415398&lon=10.395053";
@@ -157,35 +158,16 @@ pub struct Details3 {
 }
 
 pub async fn run(ctx: Arc<Context>) {
-    loop {
-        let now = chrono::Local::now();
-        let mut target = chrono::Local::today().and_hms(11, 7, 15); // Time used for testing. Prod maybe 09:00?
-        if now > target {
-            target += chrono::Duration::days(1);
-        }
-        let duration = (target - now).to_std().unwrap();
-        sleep(duration).await;
+    schedule(Time::EveryTime(Local::now().date().and_hms(8, 0, 0)), || async {
+        execute(ctx.clone()).await
+    }).await;
+}
 
-        let response = match fetch().await {
-            Ok(r) => r,
-            Err(e) => {
-                println!("Error: {:?}", e);
-                return;
-            }
-        };
-        let weather = match parse_weather(response) {
-            Ok(mut w) => get_latest_weather(&mut w),
-            Err(e) => {
-                println!("Error: {:?}", e);
-                return;
-            }
-        };
-        println!("{:?}", weather);
-
-        let weather_serie = match weather {
+async fn execute(ctx: Arc<Context>) {
+        let weather_serie = match fetch_today_weather().await {
             Ok(w) => w,
             Err(_e) => {
-                println!("No weather data");
+                println!("No weather data"); // TODO: Log error
                 return;
             }
         };
@@ -200,7 +182,7 @@ pub async fn run(ctx: Arc<Context>) {
         let message = ChannelId(772092284153757719)
             .send_message(&ctx.http, |m| {
                 m.embed(|e| {
-                    e.title("Weather")
+                    e.title("Weather Report")
                         .field("Time", time, false)
                         .field(
                             "Air temperature",
@@ -219,7 +201,7 @@ pub async fn run(ctx: Arc<Context>) {
                         )
                         .field(
                             "Wind from direction",
-                            weather_serie.data.instant.details.wind_from_direction,
+                            degrees_to_cardinal(weather_serie.data.instant.details.wind_from_direction),
                             false,
                         )
                         .field(
@@ -233,10 +215,9 @@ pub async fn run(ctx: Arc<Context>) {
         if let Err(e) = message {
             println!("Error: {:?}", e);
         }
-    }
 }
 
-async fn fetch() -> Result<String, String> {
+async fn fetch_today_weather() -> Result<Series, String> {
     let client = reqwest::Client::new();
     let response = client
         .get(URL)
@@ -246,7 +227,9 @@ async fn fetch() -> Result<String, String> {
         .await.map_err(|e| e.to_string())?
         .text()
         .await.map_err(|e| e.to_string())?;
-    Ok(response)
+
+    let weather = parse_weather(response)?;
+    Ok(get_latest_weather(&mut weather.clone())?)
 }
 
 fn parse_weather(response: String) -> Result<Vec<Series>, String> {
@@ -269,4 +252,10 @@ fn get_latest_weather(weather: &mut Vec<Series>) -> Result<Series, String> {
     } else {
         Err("No weather at 12".into())
     }
+}
+
+fn degrees_to_cardinal(degrees: f64) -> String {
+    let directions = ["North", "North East", "East", "South East", "South", "South West", "West", "North West", "North"];
+    let index = ((degrees + 22.5) / 45.0) as usize;
+    directions[index].to_string()
 }
