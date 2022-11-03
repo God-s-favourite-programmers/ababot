@@ -1,3 +1,8 @@
+use serenity::{
+    http::Http,
+    model::prelude::{ChannelId, GuildChannel, GuildId},
+    prelude::Context,
+};
 use std::env;
 use tracing::{instrument, metadata::LevelFilter, Level};
 use tracing_appender::non_blocking::{NonBlocking, WorkerGuard};
@@ -110,6 +115,31 @@ where
                     );
                     panic!("Target time is behind current time");
                 }
+            }
+        }
+    }
+}
+
+#[instrument(skip(http))]
+async fn get_channel_id<T>(name: T, guild: GuildId, http: &Http) -> Result<ChannelId, &'static str>
+where
+    T: AsRef<str> + std::fmt::Debug,
+{
+    let channels = guild.channels(http).await.map_err(|_e| {
+        tracing::warn!("Failed to fetch channels for guild {}", guild);
+        "Error fetching channels"
+    })?;
+
+    let first = channels
+        .into_iter()
+        .find(|(_, g)| g.name() == name.as_ref());
+    match first {
+        Some((c, _)) => Ok(c),
+        None => {
+            let r = guild.create_channel(http, |c| c.name(name.as_ref())).await;
+            match r {
+                Ok(c) => Ok(c.id),
+                Err(_) => Err("Error creating guild")
             }
         }
     }
