@@ -20,8 +20,8 @@ pub async fn run(ctx: Arc<Context>) {
 async fn execute(ctx: Arc<Context>) {
     let weather_serie = match fetch_today_weather().await {
         Ok(w) => w,
-        Err(_e) => {
-            println!("No weather data"); // TODO: Log error
+        Err(e) => {
+            tracing::warn!("Could not fetch weather. Reason: {}", e);
             return;
         }
     };
@@ -67,7 +67,7 @@ async fn execute(ctx: Arc<Context>) {
         })
         .await;
     if let Err(e) = message {
-        println!("Error: {:?}", e);
+        tracing::warn!("Could not send weather report to Discord. Reason: {}", e);
     }
 }
 
