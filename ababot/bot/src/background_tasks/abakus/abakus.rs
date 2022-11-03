@@ -9,7 +9,7 @@ use tokio::time::sleep;
 use crate::background_tasks::abakus::types::{ApiEvent, Event};
 use crate::utils::{schedule, Time, WEEK_AS_SECONDS};
 
-const _EVENT_URL: &str = "https://abakus.no/events/";
+const EVENT_URL: &str = "https://abakus.no/events/";
 pub async fn run(ctx: Arc<Context>) {
     //TODO: spawn another thread to watch for reactions to messages
     let today = chrono::offset::Local::now().date();
@@ -46,9 +46,15 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
                 m.embed(|e| {
                     e.title(&event.title)
                         .description(&event.description)
-                        .field("Time", &event.event_time.to_rfc2822(), false)
+                        .field(
+                            "Time",
+                            &event.event_time.to_rfc2822().split("+").next().unwrap(),
+                            false,
+                        )
                         .field("Where", &event.event_location, false)
+                        .url(format!("{}{}", EVENT_URL, event.id))
                         .image(&event.thumbnail)
+                        .footer(|f| f.text(&event.id))
                 })
             })
             .await;
@@ -77,12 +83,14 @@ fn parse_events(events: String) -> Vec<Event> {
     let events: Vec<ApiEvent> = results
         .into_par_iter()
         .map(|e| {
+            let id = e["id"].as_i64().unwrap() as i32;
             let title = e["title"].as_str().map(|s| s.to_string());
             let description = e["description"].as_str().map(|s| s.to_string());
             let event_time = e["startTime"].as_str().map(|s| s.to_string());
             let event_location = e["location"].as_str().map(|s| s.to_string());
             let thumbnail = e["cover"].as_str().map(|s| s.to_string());
             ApiEvent {
+                id,
                 title,
                 description,
                 event_time,

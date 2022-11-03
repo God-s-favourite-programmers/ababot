@@ -1,8 +1,9 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ApiEvent {
+    pub id: i32,
     pub title: Option<String>,
     pub description: Option<String>,
     pub event_time: Option<String>,
@@ -11,9 +12,10 @@ pub struct ApiEvent {
 }
 #[derive(Debug)]
 pub struct Event {
+    pub id: i32,
     pub title: String,
     pub description: String,
-    pub event_time: DateTime<Utc>,
+    pub event_time: DateTime<Local>,
     pub event_location: String,
     pub thumbnail: String,
 }
@@ -21,6 +23,7 @@ pub struct Event {
 impl From<ApiEvent> for Event {
     fn from(api_event: ApiEvent) -> Self {
         Event {
+            id: api_event.id,
             title: api_event.title.unwrap_or_else(|| "No title".to_string()),
             description: api_event
                 .description
@@ -29,7 +32,7 @@ impl From<ApiEvent> for Event {
                 .event_time
                 .unwrap_or_else(|| "".to_string())
                 .parse()
-                .unwrap_or_else(|_| Utc::now()),
+                .unwrap_or_else(|_| Local::now()),
             event_location: api_event
                 .event_location
                 .unwrap_or_else(|| "N/A".to_string()),
