@@ -57,7 +57,6 @@ impl EventHandler for Handler {
                 tracing::debug!("Command registration succeeded")
             }
             Err(e) => {
-                eprintln!("{:?}", e);
                 tracing::error!("Command registration failed: {:?}", e)
             }
         }
