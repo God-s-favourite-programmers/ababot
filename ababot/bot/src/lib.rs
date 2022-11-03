@@ -30,7 +30,6 @@ impl EventHandler for Handler {
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!("Bot ready");
         tracing::info!("Connecting as {}", ready.user.name);
 
         // Check should not be neccessary as ready is only called once
@@ -41,9 +40,9 @@ impl EventHandler for Handler {
         dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
         let guild_id = GuildId(
             env::var("GUILD_ID")
-                .expect("Expected GUILD_ID in environment")
-                .parse()
-                .expect("GUILD_ID must be an integer"),
+            .expect("Expected GUILD_ID in environment")
+            .parse()
+            .expect("GUILD_ID must be an integer"),
         );
 
         tracing::debug!("Got Guild Id: {}", &guild_id);
@@ -61,5 +60,6 @@ impl EventHandler for Handler {
             }
         }
         tracing::info!("Setup complete");
+        println!("Bot ready");
     }
 }
