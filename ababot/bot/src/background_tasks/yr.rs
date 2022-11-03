@@ -1,9 +1,14 @@
-use std::sync::Arc;
+use std::{error::Error, sync::Arc};
 
-use serenity::{model::prelude::ChannelId, prelude::Context};
-
-
+use chrono::{DateTime, Utc, NaiveDateTime, Timelike};
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
+use serenity::{model::prelude::ChannelId, prelude::Context};
+use tokio::time::sleep;
+
+const URL: &str =
+    "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.415398&lon=10.395053";
+const HEADER: &str = "Accept: application/json";
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -154,11 +159,113 @@ pub struct Details3 {
 }
 
 pub async fn run(ctx: Arc<Context>) {
-    let _noe = ChannelId(772092284153757719)
-        .send_message(&ctx.http, |m| m.embed(|e| e.title("Asyncly doing stuff 2")))
-        .await;
-    if let Err(e) = _noe {
-        // TODO: log
-        println!("Error: {:?}", e);
+    loop {
+        let now = chrono::Local::now();
+        let mut target = chrono::Local::today().and_hms(11, 7, 15); // Time used for testing. Prod maybe 09:00?
+        if now > target {
+            target += chrono::Duration::days(1);
+        }
+        let duration = (target - now).to_std().unwrap();
+        sleep(duration).await;
+
+        let response = match fetch().await {
+            Ok(r) => r,
+            Err(e) => {
+                println!("Error: {:?}", e);
+                return;
+            }
+        };
+        let weather = match parse_weather(response) {
+            Ok(mut w) => get_latest_weather(&mut w),
+            Err(e) => {
+                println!("Error: {:?}", e);
+                return;
+            }
+        };
+        println!("{:?}", weather);
+
+        let weather = match weather {
+            Ok(w) => w,
+            Err(_e) => {
+                println!("No weather data");
+                return;
+            }
+        };
+
+        let time = DateTime::<Utc>::from_utc(
+            NaiveDateTime::parse_from_str(&weather.time, "%Y-%m-%dT%H:%M:%SZ").unwrap(),
+            Utc,
+        ).format("%d/%m at %H:%M").to_string();
+
+        let message = ChannelId(772092284153757719)
+            .send_message(&ctx.http, |m| {
+                m.embed(|e| {
+                    e.title("Weather")
+                        .field("Time", time, false)
+                        .field(
+                            "Air temperature",
+                            weather.data.instant.details.air_temperature,
+                            false,
+                        )
+                        .field(
+                            "Cloud area fraction",
+                            weather.data.instant.details.cloud_area_fraction,
+                            false,
+                        )
+                        .field(
+                            "Relative humidity",
+                            weather.data.instant.details.relative_humidity,
+                            false,
+                        )
+                        .field(
+                            "Wind from direction",
+                            weather.data.instant.details.wind_from_direction,
+                            false,
+                        )
+                        .field("Wind speed", weather.data.instant.details.wind_speed, false)
+                })
+            })
+            .await;
+        if let Err(e) = message {
+            println!("Error: {:?}", e);
+        }
+    }
+}
+
+async fn fetch() -> Result<String, Box<dyn Error>> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get(URL)
+        .header("Accept", "application/json")
+        .header("User-Agent", "DiscordBot")
+        .send()
+        .await?
+        .text()
+        .await?;
+    Ok(response)
+}
+
+fn parse_weather(response: String) -> Result<Vec<Series>, Box<dyn Error>> {
+    let weather: Root = serde_json::from_str(&response)?;
+    Ok(weather.properties.timeseries)
+}
+
+fn get_latest_weather(weather: &mut Vec<Series>) -> Result<Series, Box<dyn Error>> {
+    weather.sort_by(|a, b| {
+        DateTime::parse_from_rfc3339(&a.time)
+            .unwrap()
+            .cmp(&DateTime::parse_from_rfc3339(&b.time).unwrap())
+    });
+    let serie_at_12 = weather.into_iter().find(|s| {
+        DateTime::parse_from_rfc3339(&s.time)
+            .unwrap()
+            .hour()
+            == 12
+    });
+
+    if let Some(s) = serie_at_12 {
+        return Ok(s.clone());
+    } else {
+        return Err("No weather at 12".into());
     }
 }
