@@ -1,4 +1,4 @@
-use crate::types::stonk::Stonk;
+use crate::commands::stonk::types::Stonk;
 use serenity::{
     builder::CreateApplicationCommand,
     model::prelude::{
@@ -24,7 +24,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 .unwrap_or("AAPL");
             let stonk_history = get_last_stonk(ticker).await;
             let first: String = match stonk_history {
-                Ok(stonk) => stonk.close.to_string(),
+                Ok(stonk) => format!("{:.2}", stonk.close),
                 Err(e) => {
                     tracing::debug!("Could not find stonk {}: {}", ticker, e);
                     "No stonks found".to_string()

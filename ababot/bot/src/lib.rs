@@ -9,7 +9,6 @@ use serenity::prelude::{Context, EventHandler};
 
 pub mod background_tasks;
 pub mod commands;
-pub mod types;
 pub mod utils;
 
 pub struct Handler {
@@ -40,9 +39,9 @@ impl EventHandler for Handler {
         dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
         let guild_id = GuildId(
             env::var("GUILD_ID")
-            .expect("Expected GUILD_ID in environment")
-            .parse()
-            .expect("GUILD_ID must be an integer"),
+                .expect("Expected GUILD_ID in environment")
+                .parse()
+                .expect("GUILD_ID must be an integer"),
         );
 
         tracing::debug!("Got Guild Id: {}", &guild_id);

@@ -139,7 +139,7 @@ where
             let r = guild.create_channel(http, |c| c.name(name.as_ref())).await;
             match r {
                 Ok(c) => Ok(c.id),
-                Err(_) => Err("Error creating guild")
+                Err(_) => Err("Error creating guild"),
             }
         }
     }
