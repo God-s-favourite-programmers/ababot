@@ -50,7 +50,7 @@ pub async fn run(ctx: Arc<Context>) {
 
     loop {
         let now = chrono::Local::now();
-        let mut target = chrono::Local::today().and_hms(22, 26, 15); // Time used for testing. Prod maybe 09:00?
+        let mut target = chrono::Local::today().and_hms(9, 16, 15); // Time used for testing. Prod maybe 09:00?
         if now > target {
             target += chrono::Duration::days(1);
         }
