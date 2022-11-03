@@ -47,6 +47,13 @@ impl From<ApiEvent> for Event {
     }
 }
 
+pub async fn run(ctx: Arc<Context>) {
+    //TODO: spawn another thread to watch for reactions to messages
+    schedule(Time::EveryTime(chrono::offset::Local::now().date().and_hms(8, 0, 0)), || async {
+        fetch_and_send(ctx.clone()).await
+    }).await
+}
+
 pub async fn fetch_and_send(ctx: Arc<Context>) {
     let fetched_data = match fetch().await {
         Ok(v) => v,
@@ -77,12 +84,6 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
     }
 }
 
-pub async fn run(ctx: Arc<Context>) {
-    //TODO: spawn another thread to watch for reactions to messages
-    schedule(Time::EveryTime(chrono::offset::Local::now().date().and_hms(8, 0, 0)), || async {
-        fetch_and_send(ctx.clone()).await
-    }).await
-}
 
 async fn fetch() -> Result<String, Box<dyn std::error::Error>> {
     let client = Client::new();
