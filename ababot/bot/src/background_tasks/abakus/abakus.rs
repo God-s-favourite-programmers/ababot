@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use serenity::{model::prelude::ChannelId, prelude::Context};
 use tokio::time::sleep;
 
+use crate::utils::{schedule, Time};
+
 const _EVENT_URL: &str = "https://abakus.no/events/";
 #[derive(Serialize, Deserialize, Debug)]
 struct ApiEvent {
@@ -45,46 +47,41 @@ impl From<ApiEvent> for Event {
     }
 }
 
+pub async fn fetch_and_send(ctx: Arc<Context>) {
+    let fetched_data = match fetch().await {
+        Ok(v) => v,
+        Err(e) => {
+            println!("Error: {:?}", e);
+            return;
+        }
+    };
+
+    let events = parse_events(fetched_data);
+
+    for event in events {
+        let channel_message = ChannelId(772092284153757719)
+            .send_message(&ctx.http, |m| {
+                m.embed(|e| {
+                    e.title(&event.title)
+                        .description(&event.description)
+                        .field("Time", &event.event_time.to_rfc2822(), false)
+                        .field("Where", &event.event_location, false)
+                        .image(&event.thumbnail)
+                })
+            })
+            .await;
+        if let Err(e) = channel_message {
+            println!("Error: {:?}", e);
+        }
+        sleep(std::time::Duration::from_secs(2)).await;
+    }
+}
+
 pub async fn run(ctx: Arc<Context>) {
     //TODO: spawn another thread to watch for reactions to messages
-
-    loop {
-        let now = chrono::Local::now();
-        let mut target = chrono::Local::today().and_hms(9, 16, 15); // Time used for testing. Prod maybe 09:00?
-        if now > target {
-            target += chrono::Duration::days(1);
-        }
-        let duration = (target - now).to_std().unwrap();
-        sleep(duration).await;
-
-        let fetched_data = match fetch().await {
-            Ok(v) => v,
-            Err(e) => {
-                println!("Error: {:?}", e);
-                continue;
-            }
-        };
-
-        let events = parse_events(fetched_data);
-
-        for event in events {
-            let channel_message = ChannelId(772092284153757719)
-                .send_message(&ctx.http, |m| {
-                    m.embed(|e| {
-                        e.title(&event.title)
-                            .description(&event.description)
-                            .field("Time", &event.event_time.to_rfc2822(), false)
-                            .field("Where", &event.event_location, false)
-                            .image(&event.thumbnail)
-                    })
-                })
-                .await;
-            if let Err(e) = channel_message {
-                println!("Error: {:?}", e);
-            }
-            sleep(std::time::Duration::from_secs(2)).await;
-        }
-    }
+    schedule(Time::EveryTime(chrono::offset::Local::now().date().and_hms(8, 0, 0)), || async {
+        fetch_and_send(ctx.clone()).await
+    }).await
 }
 
 async fn fetch() -> Result<String, Box<dyn std::error::Error>> {
