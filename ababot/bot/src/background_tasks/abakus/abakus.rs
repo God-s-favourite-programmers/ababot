@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, Utc};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serenity::{model::prelude::ChannelId, prelude::Context};
 use tokio::time::sleep;
 
-use crate::utils::{schedule, Time};
+use crate::utils::{schedule, Time, WEEK_AS_SECONDS};
 
 const _EVENT_URL: &str = "https://abakus.no/events/";
 #[derive(Serialize, Deserialize, Debug)]
@@ -79,9 +79,22 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
 
 pub async fn run(ctx: Arc<Context>) {
     //TODO: spawn another thread to watch for reactions to messages
-    schedule(Time::EveryTime(chrono::offset::Local::now().date().and_hms(8, 0, 0)), || async {
-        fetch_and_send(ctx.clone()).await
-    }).await
+
+    let today = chrono::offset::Local::now().date();
+    let next_monday_offset = today.weekday().num_days_from_monday();
+    let mut next_monday = today;
+    for _ in 0..next_monday_offset {
+        next_monday = next_monday.succ()
+    }
+
+    schedule(
+        Time::EveryDeltaStartAt(
+            std::time::Duration::from_secs(WEEK_AS_SECONDS),
+            next_monday.and_hms(8, 0, 0),
+        ),
+        || async { fetch_and_send(ctx.clone()).await },
+    )
+    .await
 }
 
 async fn fetch() -> Result<String, Box<dyn std::error::Error>> {

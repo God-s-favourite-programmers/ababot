@@ -45,6 +45,9 @@ pub enum Time {
     EveryDeltaStartAt(std::time::Duration, chrono::DateTime<chrono::Local>),
 }
 
+
+pub const WEEK_AS_SECONDS: u64 = 604800;
+
 /// Schedule an action to be repeated
 /// This function will never return, as it is stuck in an infinite loop
 /// Only way it exits is through a panic
