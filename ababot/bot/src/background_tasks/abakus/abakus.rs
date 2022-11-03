@@ -1,55 +1,17 @@
 use std::sync::Arc;
 
-use chrono::{DateTime, Datelike, Utc};
+use chrono::Datelike;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
 use serenity::{model::prelude::ChannelId, prelude::Context};
 use tokio::time::sleep;
 
+use crate::background_tasks::abakus::types::{ApiEvent, Event};
 use crate::utils::{schedule, Time, WEEK_AS_SECONDS};
 
 const _EVENT_URL: &str = "https://abakus.no/events/";
-#[derive(Serialize, Deserialize, Debug)]
-struct ApiEvent {
-    title: Option<String>,
-    description: Option<String>,
-    event_time: Option<String>,
-    event_location: Option<String>,
-    thumbnail: Option<String>,
-}
-#[derive(Debug)]
-struct Event {
-    title: String,
-    description: String,
-    event_time: DateTime<Utc>,
-    event_location: String,
-    thumbnail: String,
-}
-
-impl From<ApiEvent> for Event {
-    fn from(api_event: ApiEvent) -> Self {
-        Event {
-            title: api_event.title.unwrap_or_else(|| "No title".to_string()),
-            description: api_event
-                .description
-                .unwrap_or_else(|| "No description".to_string()),
-            event_time: api_event
-                .event_time
-                .unwrap_or_else(|| "".to_string())
-                .parse()
-                .unwrap_or_else(|_| Utc::now()),
-            event_location: api_event
-                .event_location
-                .unwrap_or_else(|| "N/A".to_string()),
-            thumbnail: api_event.thumbnail.unwrap_or_else(|| "N/A".to_string()),
-        }
-    }
-}
-
 pub async fn run(ctx: Arc<Context>) {
     //TODO: spawn another thread to watch for reactions to messages
-
     let today = chrono::offset::Local::now().date();
     let next_monday_offset = today.weekday().num_days_from_monday();
     let mut next_monday = today;
@@ -96,7 +58,6 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
         sleep(std::time::Duration::from_secs(2)).await;
     }
 }
-
 
 async fn fetch() -> Result<String, Box<dyn std::error::Error>> {
     let client = Client::new();

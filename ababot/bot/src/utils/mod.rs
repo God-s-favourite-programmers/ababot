@@ -45,7 +45,6 @@ pub enum Time {
     EveryDeltaStartAt(std::time::Duration, chrono::DateTime<chrono::Local>),
 }
 
-
 pub const WEEK_AS_SECONDS: u64 = 604800;
 
 /// Schedule an action to be repeated
