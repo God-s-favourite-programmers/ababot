@@ -1,4 +1,7 @@
-use std::fs::{self, ReadDir};
+use std::{
+    ffi::OsString,
+    fs::{self, ReadDir},
+};
 
 use proc_macro::TokenStream;
 use syn::{parse::Parse, parse_macro_input, LitStr};
@@ -10,21 +13,43 @@ fn get_file_names(dir: ReadDir) -> Vec<String> {
             Ok(file) => {
                 let os_name = file.file_name();
                 let name = os_name.to_str();
-                match name {
-                    Some(name) => {
-                        if name == "mod.rs" || !name.ends_with(".rs") {
-                            continue;
-                        }
-                        let sanitized = name.split('.').next().unwrap();
-                        names.push(sanitized.to_string());
+                if let Ok(t) = file.file_type() {
+                    if t.is_dir() {
+                        push_name(name, &os_name, |_s| true, &mut names);
+                        continue;
                     }
-                    None => panic!("Invalid file name: {:?}", os_name),
                 }
+                push_name(
+                    name,
+                    &os_name,
+                    |s| s != "mod.rs" && s.ends_with(".rs"),
+                    &mut names,
+                );
             }
             Err(e) => panic!("Error reading file: {}", e),
         }
     }
     names
+}
+
+fn push_name<Validator>(
+    name: Option<&str>,
+    os_name: &OsString,
+    check: Validator,
+    names: &mut Vec<String>,
+) where
+    Validator: FnOnce(&str) -> bool,
+{
+    match name {
+        Some(name) => {
+            if !check(name) {
+                return;
+            }
+            let sanitized = name.split('.').next().unwrap();
+            names.push(sanitized.to_string());
+        }
+        None => panic!("Invalid file name: {:?}", os_name),
+    }
 }
 
 #[proc_macro]
