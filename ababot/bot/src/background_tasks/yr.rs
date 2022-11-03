@@ -1,14 +1,12 @@
-use std::{error::Error, sync::Arc};
+use std::sync::Arc;
 
-use chrono::{DateTime, Utc, NaiveDateTime, Timelike};
-use rayon::prelude::{IntoParallelIterator, ParallelIterator};
+use chrono::{DateTime, NaiveDateTime, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use serenity::{model::prelude::ChannelId, prelude::Context};
 use tokio::time::sleep;
 
 const URL: &str =
     "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.415398&lon=10.395053";
-const HEADER: &str = "Accept: application/json";
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -34,7 +32,7 @@ pub struct Properties {
     pub timeseries: Vec<Series>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Meta {
     #[serde(rename = "updated_at")]
@@ -42,7 +40,7 @@ pub struct Meta {
     pub units: Units,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Units {
     #[serde(rename = "air_pressure_at_sea_level")]
@@ -103,13 +101,13 @@ pub struct Details {
     pub wind_speed: f64,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Next12Hours {
     pub summary: Summary,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Summary {
     #[serde(rename = "symbol_code")]
@@ -123,7 +121,7 @@ pub struct Next1Hours {
     pub details: Details2,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Summary2 {
     #[serde(rename = "symbol_code")]
@@ -144,7 +142,7 @@ pub struct Next6Hours {
     pub details: Details3,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Summary3 {
     #[serde(rename = "symbol_code")]
@@ -184,7 +182,7 @@ pub async fn run(ctx: Arc<Context>) {
         };
         println!("{:?}", weather);
 
-        let weather = match weather {
+        let weather_serie = match weather {
             Ok(w) => w,
             Err(_e) => {
                 println!("No weather data");
@@ -193,9 +191,11 @@ pub async fn run(ctx: Arc<Context>) {
         };
 
         let time = DateTime::<Utc>::from_utc(
-            NaiveDateTime::parse_from_str(&weather.time, "%Y-%m-%dT%H:%M:%SZ").unwrap(),
+            NaiveDateTime::parse_from_str(&weather_serie.time, "%Y-%m-%dT%H:%M:%SZ").unwrap(),
             Utc,
-        ).format("%d/%m at %H:%M").to_string();
+        )
+        .format("%d/%m at %H:%M")
+        .to_string();
 
         let message = ChannelId(772092284153757719)
             .send_message(&ctx.http, |m| {
@@ -204,25 +204,29 @@ pub async fn run(ctx: Arc<Context>) {
                         .field("Time", time, false)
                         .field(
                             "Air temperature",
-                            weather.data.instant.details.air_temperature,
+                            weather_serie.data.instant.details.air_temperature,
                             false,
                         )
                         .field(
                             "Cloud area fraction",
-                            weather.data.instant.details.cloud_area_fraction,
+                            weather_serie.data.instant.details.cloud_area_fraction,
                             false,
                         )
                         .field(
                             "Relative humidity",
-                            weather.data.instant.details.relative_humidity,
+                            weather_serie.data.instant.details.relative_humidity,
                             false,
                         )
                         .field(
                             "Wind from direction",
-                            weather.data.instant.details.wind_from_direction,
+                            weather_serie.data.instant.details.wind_from_direction,
                             false,
                         )
-                        .field("Wind speed", weather.data.instant.details.wind_speed, false)
+                        .field(
+                            "Wind speed",
+                            weather_serie.data.instant.details.wind_speed,
+                            false,
+                        )
                 })
             })
             .await;
@@ -232,40 +236,37 @@ pub async fn run(ctx: Arc<Context>) {
     }
 }
 
-async fn fetch() -> Result<String, Box<dyn Error>> {
+async fn fetch() -> Result<String, String> {
     let client = reqwest::Client::new();
     let response = client
         .get(URL)
         .header("Accept", "application/json")
         .header("User-Agent", "DiscordBot")
         .send()
-        .await?
+        .await.map_err(|e| e.to_string())?
         .text()
-        .await?;
+        .await.map_err(|e| e.to_string())?;
     Ok(response)
 }
 
-fn parse_weather(response: String) -> Result<Vec<Series>, Box<dyn Error>> {
-    let weather: Root = serde_json::from_str(&response)?;
+fn parse_weather(response: String) -> Result<Vec<Series>, String> {
+    let weather: Root = serde_json::from_str(&response).map_err(|_e| "Failed to parse json")?;
     Ok(weather.properties.timeseries)
 }
 
-fn get_latest_weather(weather: &mut Vec<Series>) -> Result<Series, Box<dyn Error>> {
+fn get_latest_weather(weather: &mut Vec<Series>) -> Result<Series, String> {
     weather.sort_by(|a, b| {
         DateTime::parse_from_rfc3339(&a.time)
             .unwrap()
             .cmp(&DateTime::parse_from_rfc3339(&b.time).unwrap())
     });
-    let serie_at_12 = weather.into_iter().find(|s| {
-        DateTime::parse_from_rfc3339(&s.time)
-            .unwrap()
-            .hour()
-            == 12
-    });
+    let serie_at_12 = weather
+        .iter_mut()
+        .find(|s| DateTime::parse_from_rfc3339(&s.time).unwrap().hour() == 12);
 
     if let Some(s) = serie_at_12 {
-        return Ok(s.clone());
+        Ok(s.clone())
     } else {
-        return Err("No weather at 12".into());
+        Err("No weather at 12".into())
     }
 }
