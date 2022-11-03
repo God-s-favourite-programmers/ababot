@@ -33,7 +33,7 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
     let fetched_data = match fetch().await {
         Ok(v) => v,
         Err(e) => {
-            println!("Error: {:?}", e);
+            tracing::warn!("Could not fetch events. Reason: {}", e);
             return;
         }
     };
@@ -53,7 +53,7 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
             })
             .await;
         if let Err(e) = channel_message {
-            println!("Error: {:?}", e);
+            tracing::warn!("Could not send message. Reason: {}", e);
         }
         sleep(std::time::Duration::from_secs(2)).await;
     }
@@ -66,7 +66,7 @@ async fn fetch() -> Result<String, Box<dyn std::error::Error>> {
         "https://lego.abakus.no/api/v1/events/?date_after={}",
         today.format("%Y-%m-%d")
     );
-    println!("Fetching {}", url);
+    tracing::info!("Fetching events from {}", url);
     let res = client.get(url).send().await?.text().await?;
     Ok(res)
 }
