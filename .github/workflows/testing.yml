@@ -22,6 +22,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with: 
           workspaces: "./ababot -> target"
+          shared-key: "crates.io"
       - name: Install rust
         uses: actions-rs/toolchain@v1
         with:
@@ -44,6 +45,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with: 
           workspaces: "./ababot -> target"
+          shared-key: "crates.io"
       - name: Install rust
         uses: actions-rs/toolchain@v1
         with:

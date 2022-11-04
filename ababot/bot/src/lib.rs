@@ -1,16 +1,19 @@
 use std::env;
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 
+pub mod background_tasks;
 pub mod commands;
-pub mod database;
-pub mod types;
 pub mod utils;
 
-pub struct Handler;
+pub struct Handler {
+    pub loop_running: AtomicBool,
+}
 
 async fn nop() {}
 
@@ -28,6 +31,12 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         tracing::info!("Connecting as {}", ready.user.name);
 
+        // Check should not be neccessary as ready is only called once
+        // Utenfor makro
+        let ctx = Arc::new(ctx);
+
+        // Every background task has to handle its own setup, executing, and contiguos execution
+        dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
         let guild_id = GuildId(
             env::var("GUILD_ID")
                 .expect("Expected GUILD_ID in environment")
@@ -46,10 +55,10 @@ impl EventHandler for Handler {
                 tracing::debug!("Command registration succeeded")
             }
             Err(e) => {
-                eprintln!("{:?}", e);
                 tracing::error!("Command registration failed: {:?}", e)
             }
         }
         tracing::info!("Setup complete");
+        println!("Bot ready");
     }
 }

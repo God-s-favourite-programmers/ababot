@@ -1,4 +1,4 @@
-use crate::types::stonk::Stonk;
+use crate::commands::stonk::types::Stonk;
 use serenity::{
     builder::CreateApplicationCommand,
     model::prelude::{
@@ -20,12 +20,11 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             let ticker = opt
                 .value
                 .as_ref()
-                .map(|v| v.as_str())
-                .flatten()
+                .and_then(|v| v.as_str())
                 .unwrap_or("AAPL");
             let stonk_history = get_last_stonk(ticker).await;
             let first: String = match stonk_history {
-                Ok(stonk) => stonk.close.to_string(),
+                Ok(stonk) => format!("{:.2}", stonk.close),
                 Err(e) => {
                     tracing::debug!("Could not find stonk {}: {}", ticker, e);
                     "No stonks found".to_string()
@@ -61,6 +60,7 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
 }
 
 #[instrument(level = "debug")]
+#[allow(dead_code)]
 pub async fn get_latest_stonks(stonk_name: &str) -> Result<Vec<Stonk>, Box<dyn std::error::Error>> {
     let provider = yahoo::YahooConnector::new();
     let resp = provider
@@ -68,7 +68,7 @@ pub async fn get_latest_stonks(stonk_name: &str) -> Result<Vec<Stonk>, Box<dyn s
         .await?
         .quotes()?
         .iter()
-        .map(|quote| Stonk::from(quote))
+        .map(Stonk::from)
         .collect();
     Ok(resp)
 }
