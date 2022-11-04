@@ -13,16 +13,12 @@ const EVENT_URL: &str = "https://abakus.no/events/";
 pub async fn run(ctx: Arc<Context>) {
     //TODO: spawn another thread to watch for reactions to messages
     let today = chrono::offset::Local::now().date();
-    let next_monday_offset = today.weekday().num_days_from_monday();
-    let mut next_monday = today;
-    for _ in 0..next_monday_offset {
-        next_monday = next_monday.succ()
-    }
+    let tomorrow = today.succ();
 
     schedule(
         Time::EveryDeltaStartAt(
             std::time::Duration::from_secs(WEEK_AS_SECONDS),
-            next_monday.and_hms(8, 0, 0),
+            tomorrow.and_hms(8, 0, 0),
         ),
         || async { fetch_and_send(ctx.clone()).await },
     )
