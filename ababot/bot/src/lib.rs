@@ -10,6 +10,7 @@ use serenity::prelude::{Context, EventHandler};
 pub mod background_tasks;
 pub mod commands;
 pub mod utils;
+pub mod database;
 
 pub struct Handler {
     pub loop_running: AtomicBool,

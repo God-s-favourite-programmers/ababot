@@ -12,6 +12,10 @@ use tracing::instrument;
 
 use crate::database::{load::load_all_data, save::save};
 
+
+//      - GUILD_ID=743914289714298933
+      //- DISCORD_TOKEN=MTAzNDc2MDM4NzA1ODQ3OTEwNA.GhHpgq.9sydKaaOyn8uumc5RYHOW7mS8dBlrxxRvA3q0E
+
 #[instrument(skip(ctx, command))]
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut ans = "No option selected".to_string();
