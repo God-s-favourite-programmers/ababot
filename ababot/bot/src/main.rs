@@ -1,6 +1,6 @@
-use std::env;
+use std::{env, sync::atomic::AtomicBool};
 
-use bot::{Handler, utils};
+use bot::{utils, Handler};
 use serenity::{prelude::GatewayIntents, Client};
 
 #[tokio::main]
@@ -14,10 +14,15 @@ async fn main() {
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
 
     // Build our client.
-    let mut client = Client::builder(token, GatewayIntents::empty())
-        .event_handler(Handler)
-        .await
-        .expect("Error creating client");
+    let mut client = Client::builder(
+        token,
+        GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT,
+    )
+    .event_handler(Handler {
+        loop_running: AtomicBool::new(false),
+    })
+    .await
+    .expect("Error creating client");
 
     // Finally, start a single shard, and start listening to events.
     //

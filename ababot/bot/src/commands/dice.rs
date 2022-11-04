@@ -1,3 +1,5 @@
+use std::mem::swap;
+
 use serenity::{
     builder::CreateApplicationCommand,
     model::prelude::{
@@ -22,34 +24,25 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 
         for option in &command.data.options {
             if option.name == "min" {
-                min = option
-                    .value
-                    .as_ref()
-                    .map(|v| v.as_i64())
-                    .flatten()
-                    .unwrap_or(0);
+                min = option.value.as_ref().and_then(|v| v.as_i64()).unwrap_or(0);
             }
             if option.name == "max" {
                 max = option
                     .value
                     .as_ref()
-                    .map(|v| v.as_i64())
-                    .flatten()
+                    .and_then(|v| v.as_i64())
                     .unwrap_or(100);
             }
         }
-        let dice_roll;
         if max < min {
-            let tmp = max;
-            max = min;
-            min = tmp;
+            swap(&mut max, &mut min);
         }
-        if min == max {
-            dice_roll = format!("{} to {} is not a valid range", min, max);
+        let dice_roll = if min == max {
+            format!("{} to {} is not a valid range", min, max)
         } else {
             let mut rng = thread_rng();
-            dice_roll = rng.gen_range(min..max).to_string();
-        }
+            rng.gen_range(min..max).to_string()
+        };
         if let Err(why) = command
             .create_interaction_response(&ctx.http, |response| {
                 response

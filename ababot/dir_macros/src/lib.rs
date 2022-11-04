@@ -1,5 +1,7 @@
-use core::panic;
-use std::fs::{self, ReadDir};
+use std::{
+    ffi::OsString,
+    fs::{self, ReadDir},
+};
 
 use proc_macro::TokenStream;
 use syn::{parse::Parse, parse_macro_input, LitStr};
@@ -11,21 +13,43 @@ fn get_file_names(dir: ReadDir) -> Vec<String> {
             Ok(file) => {
                 let os_name = file.file_name();
                 let name = os_name.to_str();
-                match name {
-                    Some(name) => {
-                        if name == "mod.rs" || !name.ends_with(".rs") {
-                            continue;
-                        }
-                        let sanitized = name.split(".").next().unwrap();
-                        names.push(sanitized.to_string());
+                if let Ok(t) = file.file_type() {
+                    if t.is_dir() {
+                        push_name(name, &os_name, |_s| true, &mut names);
+                        continue;
                     }
-                    None => panic!("Invalid file name: {:?}", os_name),
                 }
+                push_name(
+                    name,
+                    &os_name,
+                    |s| s != "mod.rs" && s.ends_with(".rs"),
+                    &mut names,
+                );
             }
             Err(e) => panic!("Error reading file: {}", e),
         }
     }
     names
+}
+
+fn push_name<Validator>(
+    name: Option<&str>,
+    os_name: &OsString,
+    check: Validator,
+    names: &mut Vec<String>,
+) where
+    Validator: FnOnce(&str) -> bool,
+{
+    match name {
+        Some(name) => {
+            if !check(name) {
+                return;
+            }
+            let sanitized = name.split('.').next().unwrap();
+            names.push(sanitized.to_string());
+        }
+        None => panic!("Invalid file name: {:?}", os_name),
+    }
 }
 
 #[proc_macro]
@@ -85,11 +109,11 @@ pub fn run_commands_async(input: TokenStream) -> TokenStream {
     let mut output = String::from(" match input {\n");
     for name in names {
         output.push_str(&format!(
-            "\"{}\" => {}::{}::{},\n",
+            "\"{}\" => {}::{}::{}.await,\n",
             name,
             rust_path.value(),
             name,
-            format!("{}.await", function_name.value())
+            function_name.value()
         ))
     }
     output.push_str("_ => nop().await\n}");
@@ -99,6 +123,37 @@ pub fn run_commands_async(input: TokenStream) -> TokenStream {
         Err(e) => panic!("Error parsing: {}", e),
     }
 }
+
+#[proc_macro]
+pub fn long_running(input: TokenStream) -> TokenStream {
+    let InvocationTarget {
+        directory,
+        rust_path,
+        function_name,
+    } = parse_macro_input!(input as InvocationTarget);
+
+    let dir = match fs::read_dir(directory.value()) {
+        Ok(dir) => dir,
+        Err(e) => panic!("{}", e),
+    };
+
+    let names = get_file_names(dir);
+    let mut output = String::new();
+    for name in names {
+        output.push_str(&format!(
+            "let ctx_cpy = Arc::clone(&ctx);
+            \ntokio::spawn(async move {{
+                {}::{}::{}.await;
+            }});",
+            rust_path.value(),
+            name,
+            function_name.value()
+        ))
+    }
+
+    output.parse().unwrap()
+}
+
 #[proc_macro]
 pub fn run_commands(input: TokenStream) -> TokenStream {
     let InvocationTarget {
