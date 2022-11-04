@@ -38,10 +38,12 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
         }
     };
 
-    let events = parse_events(fetched_data);
+    let all_events = parse_events(fetched_data);
 
-    for event in events {
-        let channel_message = ChannelId(772092284153757719)
+    let filtered_events = filter_existing_messages(ctx.clone(), all_events).await;
+
+    for event in filtered_events {
+        let channel_message = ChannelId(1038005471564533810)
             .send_message(&ctx.http, |m| {
                 m.embed(|e| {
                     e.title(&event.title)
@@ -101,4 +103,28 @@ fn parse_events(events: String) -> Vec<Event> {
         .collect();
 
     events.into_iter().map(|e| e.into()).collect()
+}
+
+async fn filter_existing_messages(
+    ctx: Arc<Context>,
+    events: Vec<Event>,
+) -> Vec<Event> {
+    let embeds = ChannelId(1038005471564533810)
+        .messages(&ctx.http, |m| m.limit(100))
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|m| m.embeds)
+        .flatten()
+        .collect::<Vec<_>>();
+    let footers: Vec<String> = embeds
+        .into_iter()
+        .map(|e| e.footer)
+        .flatten()
+        .map(|f| f.text)
+        .collect();
+    events
+        .into_par_iter()
+        .filter(|e| !footers.contains(&e.id.to_string()))
+        .collect()
 }
