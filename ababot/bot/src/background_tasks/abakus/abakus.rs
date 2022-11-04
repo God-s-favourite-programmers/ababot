@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use chrono::Datelike;
+
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use reqwest::Client;
 use serenity::{model::prelude::ChannelId, prelude::Context};
