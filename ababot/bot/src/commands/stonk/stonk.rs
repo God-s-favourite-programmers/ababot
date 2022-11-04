@@ -60,6 +60,7 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
 }
 
 #[instrument(level = "debug")]
+#[allow(dead_code)]
 pub async fn get_latest_stonks(stonk_name: &str) -> Result<Vec<Stonk>, Box<dyn std::error::Error>> {
     let provider = yahoo::YahooConnector::new();
     let resp = provider

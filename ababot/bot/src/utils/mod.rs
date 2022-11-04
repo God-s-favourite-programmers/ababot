@@ -1,7 +1,6 @@
 use serenity::{
     http::Http,
-    model::prelude::{ChannelId, GuildChannel, GuildId},
-    prelude::Context,
+    model::prelude::{ChannelId, GuildId},
 };
 use std::env;
 use tracing::{instrument, metadata::LevelFilter, Level};
@@ -121,10 +120,16 @@ where
 }
 
 #[instrument(skip(http))]
-async fn get_channel_id<T>(name: T, guild: GuildId, http: &Http) -> Result<ChannelId, &'static str>
+pub async fn get_channel_id<T>(name: T, http: &Http) -> Result<ChannelId, &'static str>
 where
     T: AsRef<str> + std::fmt::Debug,
 {
+    let guild = GuildId(
+        env::var("GUILD_ID")
+            .expect("Guild ID must be set as enviroment variable")
+            .parse::<u64>()
+            .expect("Guild ID must be a valid integer"),
+    );
     let channels = guild.channels(http).await.map_err(|_e| {
         tracing::warn!("Failed to fetch channels for guild {}", guild);
         "Error fetching channels"

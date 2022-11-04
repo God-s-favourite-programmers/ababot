@@ -3,7 +3,7 @@ use std::sync::Arc;
 use chrono::{DateTime, Local, NaiveDateTime, Timelike, Utc};
 use serenity::{model::prelude::ChannelId, prelude::Context};
 
-use crate::utils::{schedule, Time};
+use crate::utils::{get_channel_id, schedule, Time};
 
 const URL: &str =
     "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.415398&lon=10.395053";
@@ -18,6 +18,14 @@ pub async fn run(ctx: Arc<Context>) {
 }
 
 async fn execute(ctx: Arc<Context>) {
+    let channel_id = match get_channel_id("weather", &ctx.http).await {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Failed to get channel id: {}", e);
+            return;
+        }
+    };
+
     let weather_serie = match fetch_today_weather().await {
         Ok(w) => w,
         Err(e) => {
@@ -33,7 +41,7 @@ async fn execute(ctx: Arc<Context>) {
     .format("%d/%m at %H:%M")
     .to_string();
 
-    let message = ChannelId(772092284153757719)
+    let message = ChannelId(channel_id.0)
         .send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Weather Report")

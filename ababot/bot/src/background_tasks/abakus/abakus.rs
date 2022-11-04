@@ -7,7 +7,7 @@ use serenity::{model::prelude::ChannelId, prelude::Context};
 use tokio::time::sleep;
 
 use crate::background_tasks::abakus::types::{ApiEvent, Event};
-use crate::utils::{schedule, Time, WEEK_AS_SECONDS};
+use crate::utils::{get_channel_id, schedule, Time, WEEK_AS_SECONDS};
 
 const EVENT_URL: &str = "https://abakus.no/events/";
 pub async fn run(ctx: Arc<Context>) {
@@ -30,6 +30,14 @@ pub async fn run(ctx: Arc<Context>) {
 }
 
 pub async fn fetch_and_send(ctx: Arc<Context>) {
+    let channel_id = match get_channel_id("abakus-events", &ctx.http).await {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Failed to get channel id: {}", e);
+            return;
+        }
+    };
+
     let fetched_data = match fetch().await {
         Ok(v) => v,
         Err(e) => {
@@ -43,7 +51,7 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
     let filtered_events = filter_existing_messages(ctx.clone(), all_events).await;
 
     for event in filtered_events {
-        let channel_message = ChannelId(1038005471564533810)
+        let channel_message = ChannelId(channel_id.0)
             .send_message(&ctx.http, |m| {
                 m.embed(|e| {
                     e.title(&event.title)
@@ -105,11 +113,15 @@ fn parse_events(events: String) -> Vec<Event> {
     events.into_iter().map(|e| e.into()).collect()
 }
 
-async fn filter_existing_messages(
-    ctx: Arc<Context>,
-    events: Vec<Event>,
-) -> Vec<Event> {
-    let embeds = ChannelId(1038005471564533810)
+async fn filter_existing_messages(ctx: Arc<Context>, events: Vec<Event>) -> Vec<Event> {
+    let channel_id = match get_channel_id("abakus-events", &ctx.http).await {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Failed to get channel id: {}", e);
+            return Vec::new();
+        }
+    };
+    let embeds = ChannelId(channel_id.0)
         .messages(&ctx.http, |m| m.limit(100))
         .await
         .unwrap()
