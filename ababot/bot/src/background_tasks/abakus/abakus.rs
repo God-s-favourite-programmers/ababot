@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use reqwest::Client;
 use serenity::{model::prelude::ChannelId, prelude::Context};
@@ -18,7 +17,8 @@ pub async fn run(ctx: Arc<Context>) {
     schedule(
         Time::EveryDeltaStartAt(
             std::time::Duration::from_secs(WEEK_AS_SECONDS),
-            tomorrow.and_hms(8, 0, 0),
+            // tomorrow.and_hms(8, 0, 0),
+            today.and_hms(20, 33, 0),
         ),
         || async { fetch_and_send(ctx.clone()).await },
     )
@@ -68,15 +68,33 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
             tracing::warn!("Could not send message. Reason: {}", e);
             return;
         }
+
         if let Err(e) = ChannelId(channel_id.0)
-            .create_public_thread(&ctx.http, channel_message.unwrap(), |f| {
+            .create_reaction(&ctx.http, channel_message.as_ref().unwrap(), '👍')
+            .await
+        {
+            tracing::warn!("Could not create reaction. Reason: {}", e);
+            return;
+        }
+
+        if let Err(e) = ChannelId(channel_id.0)
+            .create_reaction(&ctx.http, channel_message.as_ref().unwrap(), '👎')
+            .await
+        {
+            tracing::warn!("Could not create reaction. Reason: {}", e);
+            return;
+        }
+
+
+        if let Err(e) = ChannelId(channel_id.0)
+            .create_public_thread(&ctx.http, &channel_message.unwrap(), |f| {
                 f.name(&event.title).auto_archive_duration(1440)
             })
             .await
-            {
-                tracing::warn!("Could not create thread. Reason: {}", e);
-                return;
-            }
+        {
+            tracing::warn!("Could not create thread. Reason: {}", e);
+            return;
+        }
         sleep(std::time::Duration::from_secs(2)).await;
     }
 }
