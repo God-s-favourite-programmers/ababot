@@ -54,7 +54,7 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
                         .description(&event.description)
                         .field(
                             "Time",
-                            &event.event_time.to_rfc2822().split("+").next().unwrap(),
+                            &event.event_time.to_rfc2822().split('+').next().unwrap(),
                             false,
                         )
                         .field("Where", &event.event_location, false)
@@ -132,17 +132,13 @@ async fn filter_existing_messages(ctx: Arc<Context>, events: Vec<Event>) -> Vec<
         .await
         .unwrap()
         .into_iter()
-        .map(|m| m.embeds)
-        .flatten()
-        .collect::<Vec<_>>();
-    let footers: Vec<String> = embeds
-        .into_iter()
-        .map(|e| e.footer)
-        .flatten()
+        .flat_map(|m| m.embeds)
+        .filter_map(|e| e.footer)
         .map(|f| f.text)
-        .collect();
+        .collect::<Vec<_>>();
+
     events
         .into_par_iter()
-        .filter(|e| !footers.contains(&e.id.to_string()))
+        .filter(|e| !embeds.contains(&e.id.to_string()))
         .collect()
 }
