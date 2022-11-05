@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use reqwest::Client;
+
 use serenity::{model::prelude::ChannelId, prelude::Context};
 use tokio::time::sleep;
 
@@ -66,7 +66,16 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
             .await;
         if let Err(e) = channel_message {
             tracing::warn!("Could not send message. Reason: {}", e);
+            return;
         }
+        if let Err(e) = ChannelId(channel_id.0)
+            .create_public_thread(&ctx.http, channel_message.unwrap(), |f| {
+                f.name(&event.title).auto_archive_duration(1440)
+            })
+            .await
+        {
+            tracing::warn!("Could not create thread. Reason: {}", e);
+        };
         sleep(std::time::Duration::from_secs(2)).await;
     }
 }

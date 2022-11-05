@@ -12,7 +12,6 @@ use tracing::instrument;
 
 use crate::database::{load::load_all_data, save::save};
 
-
 #[instrument(skip(ctx, command))]
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut ans = "No option selected".to_string();
