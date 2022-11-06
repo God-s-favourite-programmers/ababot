@@ -17,8 +17,7 @@ pub async fn run(ctx: Arc<Context>) {
     schedule(
         Time::EveryDeltaStartAt(
             std::time::Duration::from_secs(WEEK_AS_SECONDS),
-            // tomorrow.and_hms(8, 0, 0),
-            today.and_hms(20, 33, 0),
+            tomorrow.and_hms(8, 0, 0),
         ),
         || async { fetch_and_send(ctx.clone()).await },
     )
