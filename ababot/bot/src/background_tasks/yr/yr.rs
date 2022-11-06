@@ -93,7 +93,7 @@ async fn fetch_today_weather() -> Result<Series, String> {
         .map_err(|e| e.to_string())?;
 
     let mut weather = parse_weather(response)?;
-    Ok(get_latest_weather(&mut weather)?)
+    get_latest_weather(&mut weather)
 }
 
 fn parse_weather(response: String) -> Result<Vec<Series>, String> {

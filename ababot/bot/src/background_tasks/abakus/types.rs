@@ -18,6 +18,7 @@ pub struct Event {
     pub event_time: DateTime<Local>,
     pub event_location: String,
     pub thumbnail: String,
+    pub reg_time: Option<DateTime<Local>>,
 }
 
 impl From<ApiEvent> for Event {
@@ -37,6 +38,7 @@ impl From<ApiEvent> for Event {
                 .event_location
                 .unwrap_or_else(|| "N/A".to_string()),
             thumbnail: api_event.thumbnail.unwrap_or_else(|| "N/A".to_string()),
+            reg_time: None,
         }
     }
 }
