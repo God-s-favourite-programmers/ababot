@@ -6,3 +6,5 @@ members = [
 
 [profile.release]
 strip = true
+lto = true
+codegen-units = 1

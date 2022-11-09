@@ -19,7 +19,8 @@ pub async fn run(ctx: Arc<Context>) {
     schedule(
         Time::EveryDeltaStartAt(
             std::time::Duration::from_secs(WEEK_AS_SECONDS),
-            tomorrow.and_hms(8, 0, 0),
+            // tomorrow.and_hms(8, 0, 0),
+            today.and_hms(10,55, 0),
         ),
         || async { fetch_and_send(ctx.clone()).await },
     )
@@ -27,6 +28,7 @@ pub async fn run(ctx: Arc<Context>) {
 }
 
 pub async fn fetch_and_send(ctx: Arc<Context>) {
+    println!("Fetching events");
     let channel_id = match get_channel_id("abakus-events", &ctx.http).await {
         Ok(id) => id,
         Err(e) => {
