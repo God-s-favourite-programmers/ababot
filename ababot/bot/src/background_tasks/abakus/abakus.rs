@@ -27,6 +27,7 @@ pub async fn run(ctx: Arc<Context>) {
 }
 
 pub async fn fetch_and_send(ctx: Arc<Context>) {
+    tracing::info!("Posting todays registrations");
     let channel_id = match get_channel_id("abakus-events", &ctx.http).await {
         Ok(id) => id,
         Err(e) => {
@@ -38,7 +39,7 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
     let fetched_data = match fetch().await {
         Ok(v) => v,
         Err(e) => {
-            tracing::warn!("Could not fetch events. Reason: {}", e);
+            tracing::warn!("Could not fetch events: {}", e);
             return;
         }
     };
@@ -74,7 +75,7 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
             })
             .await;
         if let Err(e) = channel_message {
-            tracing::warn!("Could not send message. Reason: {}", e);
+            tracing::warn!("Could not send message: {}", e);
             return;
         }
 
@@ -82,7 +83,7 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
             .create_reaction(&ctx.http, channel_message.as_ref().unwrap(), '👍')
             .await
         {
-            tracing::warn!("Could not create reaction. Reason: {}", e);
+            tracing::warn!("Could not create reaction: {}", e);
             return;
         }
 
@@ -90,7 +91,7 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
             .create_reaction(&ctx.http, channel_message.as_ref().unwrap(), '👎')
             .await
         {
-            tracing::warn!("Could not create reaction. Reason: {}", e);
+            tracing::warn!("Could not create reaction: {}", e);
             return;
         }
 
@@ -100,7 +101,7 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
             })
             .await
         {
-            tracing::warn!("Could not create thread. Reason: {}", e);
+            tracing::warn!("Could not create thread: {}", e);
             return;
         }
 
@@ -115,7 +116,7 @@ async fn fetch() -> Result<String, Box<dyn std::error::Error>> {
         "https://lego.abakus.no/api/v1/events/?date_after={}",
         today.format("%Y-%m-%d")
     );
-    tracing::info!("Fetching events from {}", url);
+    tracing::debug!("Fetching events from {}", url);
     let res = client.get(url).send().await?.text().await?;
     Ok(res)
 }
@@ -163,17 +164,24 @@ async fn parse_events(events: String) -> Vec<Event> {
     for (mut event, time) in mapped.into_iter().zip(time_awaited.into_iter()) {
         match time {
             Ok(t) => {
-                if t.date()
+                let until = t
+                    .date()
                     .signed_duration_since(chrono::Local::today())
-                    .num_days()
-                    == 0
-                {
+                    .num_days();
+                if until == 0 {
+                    tracing::debug!("Event {} added", event.title);
                     event.reg_time = Some(t);
                     actuall_res.push(event);
+                } else {
+                    tracing::debug!(
+                        "Event {} skipped as there are {} days until registration",
+                        event.title,
+                        until
+                    );
                 }
             }
             Err(e) => {
-                tracing::info!("Could not get reg time. Reason: {}", e);
+                tracing::debug!("Could not get registration time for {}: {}", event.title, e);
             }
         }
     }
