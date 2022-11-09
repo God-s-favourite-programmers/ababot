@@ -18,6 +18,7 @@ pub async fn run(ctx: Arc<Context>) {
 }
 
 async fn execute(ctx: Arc<Context>) {
+    tracing::info!("Fetching weather data from yr.no");
     let channel_id = match get_channel_id("weather", &ctx.http).await {
         Ok(id) => id,
         Err(e) => {
@@ -75,7 +76,7 @@ async fn execute(ctx: Arc<Context>) {
         })
         .await;
     if let Err(e) = message {
-        tracing::warn!("Could not send weather report to Discord. Reason: {}", e);
+        tracing::warn!("Could not send weather report to Discord: {}", e);
     }
 }
 
