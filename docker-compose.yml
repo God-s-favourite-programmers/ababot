@@ -12,6 +12,7 @@ services:
       - GUILD_ID=
       - DISCORD_TOKEN=
       - LOG_LEVEL=info # defaults to info
+      - TZ=Europe/Oslo
   
   watchtower:
     image: containrrr/watchtower
