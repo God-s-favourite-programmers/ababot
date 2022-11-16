@@ -1,3 +1,5 @@
+pub mod gpgpu;
+
 use serenity::{
     http::Http,
     model::prelude::{ChannelId, GuildId},

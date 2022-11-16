@@ -3,6 +3,8 @@ members = [
     "bot",
     "dir_macros",
 ]
+resolver = "2"
+edition = "2021"
 
 [profile.release]
 strip = true
