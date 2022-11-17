@@ -21,7 +21,7 @@ impl GpuWorkType for i64 {}
 impl GpuWorkType for f32 {}
 impl GpuWorkType for f64 {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Vec3 {
     pub x: u16,
     pub y: u16,

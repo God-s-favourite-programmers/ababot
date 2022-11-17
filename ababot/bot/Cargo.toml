@@ -51,3 +51,4 @@ rayon = "1.5"
 # GPU
 gpgpu = { git = "https://github.com/UpsettingBoy/gpgpu-rs", branch = "dev" }
 bytemuck = "1.12.3"
+bichannel = "0.0.4"

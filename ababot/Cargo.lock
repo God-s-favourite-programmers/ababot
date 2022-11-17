@@ -96,6 +96,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
+name = "bichannel"
+version = "0.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4bdf5473d36d166934ddefbedab84ad123ba887d2dd16eb2e1a036c484c213b"
+
+[[package]]
 name = "bit-set"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -135,6 +141,7 @@ dependencies = [
 name = "bot"
 version = "0.1.0"
 dependencies = [
+ "bichannel",
  "bytemuck",
  "chrono",
  "dir_macros",
