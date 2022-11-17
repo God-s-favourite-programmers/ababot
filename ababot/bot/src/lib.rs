@@ -7,6 +7,8 @@ use serenity::model::application::interaction::Interaction;
 use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 
+use crate::utils::gpgpu::gpu::test_gpgpu;
+
 pub mod background_tasks;
 pub mod commands;
 pub mod utils;
@@ -60,5 +62,15 @@ impl EventHandler for Handler {
         }
         tracing::info!("Setup complete");
         println!("Bot ready");
+        match test_gpgpu().await {
+            Ok(_) => {
+                tracing::debug!("GPGPU test succeeded");
+                println!("GPGPU test succeeded");
+            }
+            Err(e) => {
+                tracing::error!("GPGPU test failed: {:?}", e);
+                println!("GPGPU test failed: {:?}", e);
+            }
+        }
     }
 }
