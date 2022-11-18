@@ -95,10 +95,9 @@ mod tests {
             out_data: result,
             work_size: thread_group,
         };
-
-        let (left, right) = oneshot::channel::<Vec<u32>>();
         let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
 
+        let (left, right) = oneshot::channel::<Vec<u32>>();
         let work = GpuTaskChannel {
             data: worker,
             return_channel: left,
