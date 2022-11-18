@@ -1,37 +1,38 @@
 use std::error::Error;
 
 use gpgpu::{BufOps, DescriptorSet, Framework, GpuBuffer, GpuBufferUsage, Kernel, Program, Shader};
+use tokio::sync::mpsc;
 
-use super::worker::{GpuWorkType, Worker};
+use super::{
+    channels::GpuTaskChannel,
+    worker::{GpuWorkType, Worker},
+};
 
-pub fn gpu_task<T>(
-    receiver: bichannel::Channel<Worker<T>, Worker<T>>,
+pub async fn gpu_task<T>(
+    receiver: &mut mpsc::Receiver<GpuTaskChannel<T>>,
 ) -> Result<(), Box<dyn Error>>
 where
     T: GpuWorkType,
 {
     let fw = Framework::default();
     loop {
-        let worker = match receiver.recv() {
-            Ok(w) => w,
-            Err(_e) => continue,
+        let task = match receiver.recv().await {
+            Some(w) => w,
+            None => continue,
         };
+
+        let sender = task.return_channel;
+        let worker = task.data;
 
         let shader = Shader::from_wgsl_file(&fw, &worker.file_name)?;
 
         let res = execute(&fw, shader, &worker)?;
 
-        let res_worker = Worker {
-            file_name: worker.file_name,
-            work_data: worker.work_data,
-            out_data: res,
-            work_size: worker.work_size,
+        if let Err(_) = sender.send(res) {
+            println!("Failed to send data back to main thread");
         };
-
-        let _ = receiver.send(res_worker);
     }
 }
-
 
 fn execute<T>(fw: &Framework, shader: Shader, worker: &Worker<T>) -> Result<Vec<T>, Box<dyn Error>>
 where
@@ -71,15 +72,20 @@ where
 mod tests {
     use std::error::Error;
 
-    use crate::utils::gpgpu::{worker::{Worker, Vec3}, gpu::gpu_task};
+    use tokio::sync::{mpsc, oneshot};
 
-    #[test]
-    pub fn test_gpgpu() -> Result<(), Box<dyn Error>> {
+    use crate::utils::gpgpu::{
+        channels::GpuTaskChannel,
+        gpu::gpu_task,
+        worker::{Vec3, Worker},
+    };
+
+    #[tokio::test]
+    pub async fn test_gpgpu() -> Result<(), Box<dyn Error>> {
         let file_path = String::from("gpu/gpgpu_tests/compute.wgsl");
 
         let cpu_data = (0..100).into_iter().collect::<Vec<u32>>();
         let result: Vec<u32> = (0..100).into_iter().map(|_x: u32| 0).collect();
-
 
         let thread_group = Vec3::default();
 
@@ -90,19 +96,25 @@ mod tests {
             work_size: thread_group,
         };
 
+        let (left, right) = oneshot::channel::<Vec<u32>>();
+        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
+
+        let work = GpuTaskChannel {
+            data: worker,
+            return_channel: left,
+        };
+
         let cpu_computed_data = (0..10000).into_iter().map(|x| x * 2).collect::<Vec<u32>>();
 
-
-        let (left, right) = bichannel::channel::<Worker<u32>, Worker<u32>>();
-
-        std::thread::spawn(move || {
-            gpu_task(right).unwrap();
+        tokio::spawn(async move {
+            if let Err(_) = gpu_task(&mut right_mpsc).await {
+                panic!("Failed to execute gpu task");
+            }
         });
 
-        left.send(worker).unwrap();
-        println!("Waiting for gpu task to finish");
+        left_mpsc.send(work).await.unwrap();
 
-        let res = left.recv().unwrap().out_data;
+        let res = right.await.unwrap();
 
         for (a, b) in cpu_computed_data.into_iter().zip(res) {
             assert_eq!(a, b);
