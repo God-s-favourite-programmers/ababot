@@ -6,24 +6,65 @@ use serenity::futures::future::join_all;
 use serenity::{model::prelude::ChannelId, prelude::Context};
 use tokio::time::sleep;
 
-use crate::background_tasks::abakus::types::{ApiEvent, Event};
-use crate::utils::{get_channel_id, schedule, Time, WEEK_AS_SECONDS};
+use crate::utils::{get_channel_id, schedule, Time};
+use crate::{
+    background_tasks::abakus::types::{ApiEvent, Event},
+    utils::DAY_AS_SECONDS,
+};
+use chrono_tz::Europe::Oslo;
 
 const EVENT_URL: &str = "https://abakus.no/events/";
 const REG_URL: &str = "https://lego.abakus.no/api/v1/events/";
+
+const START_TIME: (u32, u32, u32) = (8, 0, 0);
+
 pub async fn run(ctx: Arc<Context>) {
     //TODO: spawn another thread to watch for reactions to messages
-    let today = chrono::offset::Local::now().date();
-    let tomorrow = today.succ();
+    let now = chrono::Utc::now().with_timezone(&Oslo);
+    let today = now.date_naive();
+    let today_start = today.and_hms_opt(START_TIME.0, START_TIME.1, START_TIME.2);
+    match today_start {
+        Some(start) => {
+            let start = start
+                .and_local_timezone(Oslo)
+                .earliest()
+                .unwrap_or_else(|| {
+                    tracing::error!("Could not convert start time to timezone");
+                    panic!("Could not convert start time to timezone");
+                });
+            let date = if start < now {
+                now.date_naive().succ_opt().unwrap_or_else(|| {
+                    tracing::error!("Could not get tomorrow's date");
+                    panic!("Could not get tomorrow's date");
+                })
+            } else {
+                now.date_naive()
+            };
 
-    schedule(
-        Time::EveryDeltaStartAt(
-            std::time::Duration::from_secs(WEEK_AS_SECONDS),
-            tomorrow.and_hms(8, 0, 0),
-        ),
-        || async { fetch_and_send(ctx.clone()).await },
-    )
-    .await
+            schedule(
+                Time::EveryDeltaStartAt(
+                    std::time::Duration::from_secs(DAY_AS_SECONDS),
+                    date.and_hms_opt(START_TIME.0, START_TIME.1, START_TIME.2)
+                        .unwrap_or_else(|| {
+                            tracing::error!("Could not set time for start date");
+                            panic!("Could not set time for start date");
+                        })
+                        .and_local_timezone(Oslo)
+                        .earliest()
+                        .unwrap_or_else(|| {
+                            tracing::error!("Could not convert start time to timezone");
+                            panic!("Could not convert start time to timezone");
+                        }),
+                ),
+                || async { fetch_and_send(ctx.clone()).await },
+            )
+            .await
+        }
+        None => {
+            tracing::error!("Could not generate start time");
+            panic!("Could not generate start time")
+        }
+    }
 }
 
 pub async fn fetch_and_send(ctx: Arc<Context>) {
@@ -111,7 +152,8 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
 
 async fn fetch() -> Result<String, Box<dyn std::error::Error>> {
     let client = Client::new();
-    let today = chrono::Local::today();
+    let now = chrono::Utc::now().with_timezone(&Oslo);
+    let today = now.date_naive();
     let url = format!(
         "https://lego.abakus.no/api/v1/events/?date_after={}",
         today.format("%Y-%m-%d")

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use chrono::{DateTime, Local, NaiveDateTime, Timelike, Utc};
+use chrono::{DateTime, NaiveDateTime, Timelike, Utc};
+use chrono_tz::Europe::Oslo;
 use serenity::{model::prelude::ChannelId, prelude::Context};
 
 use crate::utils::{get_channel_id, schedule, Time};
@@ -10,8 +11,22 @@ const URL: &str =
 
 use crate::background_tasks::yr::types::{Root, Series};
 pub async fn run(ctx: Arc<Context>) {
+    let now = chrono::Utc::now().with_timezone(&Oslo);
     schedule(
-        Time::EveryTime(Local::now().date().and_hms(8, 0, 0)),
+        Time::EveryTime(
+            now.date_naive()
+                .and_hms_opt(8, 0, 0)
+                .unwrap_or_else(|| {
+                    tracing::error!("Could not add time to naive date");
+                    panic!("Could not add time to naive date");
+                })
+                .and_local_timezone(Oslo)
+                .earliest()
+                .unwrap_or_else(|| {
+                    tracing::error!("Could not convert start time to timezone");
+                    panic!("Could not convert start time to timezone");
+                }),
+        ),
         || async { execute(ctx.clone()).await },
     )
     .await;

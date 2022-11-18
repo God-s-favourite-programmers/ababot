@@ -1,3 +1,4 @@
+use chrono_tz::{Europe::Oslo, Tz};
 use serenity::{
     http::Http,
     model::prelude::{ChannelId, GuildId},
@@ -44,12 +45,13 @@ pub fn get_logger() -> (
 
 #[derive(Debug, Clone, Copy)]
 pub enum Time {
-    EveryTime(chrono::DateTime<chrono::Local>),
+    EveryTime(chrono::DateTime<Tz>),
     EveryDelta(std::time::Duration),
-    EveryDeltaStartAt(std::time::Duration, chrono::DateTime<chrono::Local>),
+    EveryDeltaStartAt(std::time::Duration, chrono::DateTime<Tz>),
 }
 
 pub const WEEK_AS_SECONDS: u64 = 604800;
+pub const DAY_AS_SECONDS: u64 = 86400;
 
 /// Schedule an action to be repeated
 /// This function will never return, as it is stuck in an infinite loop
@@ -60,18 +62,29 @@ where
     Action: Fn() -> Async,
     Async: std::future::Future<Output = ()>,
 {
+    let now = chrono::Utc::now().with_timezone(&Oslo);
     match time {
         Time::EveryTime(mut time) => {
             loop {
-                if chrono::offset::Local::now() > time {
+                if now > time {
                     // We should start doing this tomorrow
-                    time = time.date().succ().and_time(time.time()).unwrap_or_else(|| {
-                        tracing::error!("Failed to get successor day of {:?}", time);
-                        panic!("Failed to get successor day of {:?}", time)
-                    })
+                    time = time
+                        .date_naive()
+                        .succ_opt()
+                        .map(|t| t.and_time(time.time()))
+                        .unwrap_or_else(|| {
+                            tracing::error!("Failed to get successor day of {:?}", time);
+                            panic!("Failed to get successor day of {:?}", time)
+                        })
+                        .and_local_timezone(Oslo)
+                        .earliest()
+                        .unwrap_or_else(|| {
+                            tracing::error!("Could not convert provided time to timezone");
+                            panic!("Could not convert provided time to timezone");
+                        })
                 }
 
-                let offset = time - chrono::offset::Local::now();
+                let offset = time - now;
                 match offset.to_std() {
                     Ok(o) => {
                         tokio::time::sleep(o).await;
@@ -96,7 +109,7 @@ where
             }
         }
         Time::EveryDeltaStartAt(delta, time) => {
-            let offset = time - chrono::offset::Local::now();
+            let offset = time - now;
             match offset.to_std() {
                 Ok(o) => {
                     tokio::time::sleep(o).await;
