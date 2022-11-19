@@ -154,4 +154,40 @@ mod tests {
             assert_eq!(a, b);
         }
     }
+
+    #[tokio::test]
+    async fn test_for_loop() {
+        let file_path = String::from("gpu/gpgpu_tests/for_loop.wgsl");
+
+        let cpu_data = (0..100).into_iter().collect::<Vec<u32>>();
+        let result: Vec<u32> = vec![0; 100];
+
+        let thread_group = Vec3::default();
+
+        let worker = GpuWork {
+            file_name: file_path,
+            work_data: vec![cpu_data],
+            out_data: result,
+            work_size: thread_group,
+        };
+        let (work, right) = GpuTaskChannel::new(worker);
+
+        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
+        let base: u32 = 2;
+        let cpu_computed_data = (0..100).into_iter().map(|x| x * base.pow(10)).collect::<Vec<u32>>();
+
+        tokio::spawn(async move {
+            if let Err(_) = gpu_task(&mut right_mpsc).await {
+                panic!("Failed to execute gpu task");
+            }
+        });
+
+        left_mpsc.send(work).await.unwrap();
+
+        let res = right.await.unwrap();
+
+        for (a, b) in cpu_computed_data.into_iter().zip(res) {
+            assert_eq!(a, b);
+        }
+    }
 }
