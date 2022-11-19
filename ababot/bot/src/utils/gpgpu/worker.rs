@@ -7,7 +7,7 @@ where
 {
     pub file_name: String,
     pub work_data: Vec<Vec<T>>,
-    pub out_data: Vec<T>,
+    pub out_data_len: u64,
     pub work_size: Vec3,
 }
 

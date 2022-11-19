@@ -53,7 +53,7 @@ where
         descriptor_set = descriptor_set.bind_buffer(buff, GpuBufferUsage::ReadOnly);
     }
     // Creating and binding output buffer
-    let gpu_out_buff = GpuBuffer::<T>::with_capacity(&fw, worker.out_data.len() as u64);
+    let gpu_out_buff = GpuBuffer::<T>::with_capacity(&fw, worker.out_data_len);
     descriptor_set = descriptor_set.bind_buffer(&gpu_out_buff, GpuBufferUsage::ReadWrite);
 
     let kernel = Program::new(&shader, "main").add_descriptor_set(descriptor_set);
@@ -85,14 +85,13 @@ mod tests {
         let file_path = String::from("gpu/gpgpu_tests/compute.wgsl");
 
         let cpu_data = (0..100).into_iter().collect::<Vec<u32>>();
-        let result: Vec<u32> = (0..100).into_iter().map(|_x: u32| 0).collect();
 
         let thread_group = Vec3::default();
 
         let worker = GpuWork {
             file_name: file_path,
             work_data: vec![cpu_data],
-            out_data: result,
+            out_data_len: 100 as u64,
             work_size: thread_group,
         };
         let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
@@ -123,14 +122,13 @@ mod tests {
         let file_path = String::from("gpu/gpgpu_tests/collatz.wgsl");
 
         let cpu_data = (1..26).into_iter().collect::<Vec<u32>>();
-        let result: Vec<u32> = vec![0; 25];
 
         let thread_group = Vec3::default();
 
         let worker = GpuWork {
             file_name: file_path,
             work_data: vec![cpu_data],
-            out_data: result,
+            out_data_len: 25,
             work_size: thread_group,
         };
         let (work, right) = GpuTaskChannel::new(worker);
@@ -160,14 +158,13 @@ mod tests {
         let file_path = String::from("gpu/gpgpu_tests/for_loop.wgsl");
 
         let cpu_data = (0..100).into_iter().collect::<Vec<u32>>();
-        let result: Vec<u32> = vec![0; 100];
 
         let thread_group = Vec3::default();
 
         let worker = GpuWork {
             file_name: file_path,
             work_data: vec![cpu_data],
-            out_data: result,
+            out_data_len: 100,
             work_size: thread_group,
         };
         let (work, right) = GpuTaskChannel::new(worker);
