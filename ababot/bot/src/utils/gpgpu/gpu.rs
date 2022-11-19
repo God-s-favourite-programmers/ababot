@@ -121,4 +121,44 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_bpu_collatz() {
+        let file_path = String::from("gpu/gpgpu_tests/collatz.wgsl");
+
+        let cpu_data = (1..26).into_iter().collect::<Vec<u32>>();
+        let result: Vec<u32> = vec![0;25];
+
+        let thread_group = Vec3::default();
+
+        let worker = Worker {
+            file_name: file_path,
+            work_data: vec![cpu_data],
+            out_data: result,
+            work_size: thread_group,
+        };
+        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
+
+        let (left, right) = oneshot::channel::<Vec<u32>>();
+        let work = GpuTaskChannel {
+            data: worker,
+            return_channel: left,
+        };
+
+        let cpu_computed_data = vec![0, 1, 7, 2, 5, 8, 16, 3, 19, 6, 14, 9, 9, 17, 17, 4, 12, 20, 20, 7, 7, 15, 15, 10, 23];
+
+        tokio::spawn(async move {
+            if let Err(_) = gpu_task(&mut right_mpsc).await {
+                panic!("Failed to execute gpu task");
+            }
+        });
+
+        left_mpsc.send(work).await.unwrap();
+
+        let res = right.await.unwrap();
+
+        for (a, b) in cpu_computed_data.into_iter().zip(res) {
+            assert_eq!(a, b);
+        }
+    }
 }
