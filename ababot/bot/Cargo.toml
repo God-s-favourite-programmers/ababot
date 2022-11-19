@@ -7,6 +7,9 @@ edition = "2021"
 default = ["dice"]
 dice = ["rand"]
 
+[lib]
+doctest = false
+
 [dependencies]
 ### General dependencies
 

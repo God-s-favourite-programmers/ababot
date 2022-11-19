@@ -70,7 +70,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::error::Error;
+    use std::{error::Error, sync::Arc};
 
     use tokio::sync::mpsc;
 
@@ -183,8 +183,69 @@ mod tests {
 
         let res = right.await.unwrap();
 
+        assert_eq!(res.len(), 100);
         for (a, b) in cpu_computed_data.into_iter().zip(res) {
             assert_eq!(a, b);
         }
+
+    }
+
+    #[tokio::test]
+    async fn test_multiple_tasks() {
+        let file_path = String::from("gpu/gpgpu_tests/for_loop.wgsl");
+        let file_path_2 = String::from("gpu/gpgpu_tests/compute.wgsl");
+
+        let cpu_data = (0..100).into_iter().collect::<Vec<u32>>();
+        let cpu_data_2 = (0..100).into_iter().collect::<Vec<u32>>();
+
+        let thread_group = Vec3::default();
+
+        let worker = GpuWork {
+            file_name: file_path,
+            work_data: vec![cpu_data],
+            out_data_len: 100,
+            work_size: thread_group,
+        };
+        let worker_2 = GpuWork {
+            file_name: file_path_2,
+            work_data: vec![cpu_data_2],
+            out_data_len: 100,
+            work_size: thread_group,
+        };
+        let (work, right_1) = GpuTaskChannel::new(worker);
+        let (work_2, right_2) = GpuTaskChannel::new(worker_2);
+
+        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
+        let base: u32 = 2;
+        let cpu_computed_data = (0..100).into_iter().map(|x| x * base.pow(10)).collect::<Vec<u32>>();
+        let cpu_computed_data_2 = (0..10000).into_iter().map(|x| x * 2).collect::<Vec<u32>>();
+
+        tokio::spawn(async move {
+            if let Err(_) = gpu_task(&mut right_mpsc).await {
+                panic!("Failed to execute gpu task");
+            }
+        });
+        let left_arc = Arc::new(left_mpsc);
+        let left_arc_2 = left_arc.clone();
+        let left_arc_3 = left_arc.clone();
+        tokio::spawn(async move {
+            left_arc_2.send(work).await.unwrap();
+
+            let res = right_1.await.unwrap();
+
+            for (a, b) in cpu_computed_data.into_iter().zip(res) {
+                assert_eq!(a, b);
+            }
+        });
+
+        tokio::spawn(async move {
+            left_arc_3.send(work_2).await.unwrap();
+
+            let res = right_2.await.unwrap();
+
+            for (a, b) in cpu_computed_data_2.into_iter().zip(res) {
+                assert_eq!(a, b);
+            }
+        });
     }
 }
