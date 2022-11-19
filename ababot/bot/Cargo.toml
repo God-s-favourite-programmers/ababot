@@ -41,6 +41,7 @@ yahoo_finance_api = "=1.2.2"
 
 # Time
 chrono = "0.4"
+chrono-tz = "0.8"
 
 # HTTP requests
 reqwest = "0.11"
