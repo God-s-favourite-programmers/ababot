@@ -1,15 +1,21 @@
 use bytemuck::Pod;
 
-
 #[derive(Debug)]
-pub struct Worker<T> where T: GpuWorkType {
+pub struct GpuWork<T>
+where
+    T: GpuWorkType,
+{
     pub file_name: String,
     pub work_data: Vec<Vec<T>>,
     pub out_data: Vec<T>,
     pub work_size: Vec3,
 }
 
-pub trait GpuWorkType where Self: Pod {}
+pub trait GpuWorkType
+where
+    Self: Pod,
+{
+}
 impl GpuWorkType for u8 {}
 impl GpuWorkType for u16 {}
 impl GpuWorkType for u32 {}

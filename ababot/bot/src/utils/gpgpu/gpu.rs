@@ -5,7 +5,7 @@ use tokio::sync::mpsc;
 
 use super::{
     channels::GpuTaskChannel,
-    worker::{GpuWorkType, Worker},
+    worker::{GpuWork, GpuWorkType},
 };
 
 pub async fn gpu_task<T>(
@@ -34,7 +34,7 @@ where
     }
 }
 
-fn execute<T>(fw: &Framework, shader: Shader, worker: &Worker<T>) -> Result<Vec<T>, Box<dyn Error>>
+fn execute<T>(fw: &Framework, shader: Shader, worker: &GpuWork<T>) -> Result<Vec<T>, Box<dyn Error>>
 where
     T: GpuWorkType,
 {
@@ -72,12 +72,12 @@ where
 mod tests {
     use std::error::Error;
 
-    use tokio::sync::{mpsc, oneshot};
+    use tokio::sync::mpsc;
 
     use crate::utils::gpgpu::{
         channels::GpuTaskChannel,
         gpu::gpu_task,
-        worker::{Vec3, Worker},
+        worker::{GpuWork, Vec3},
     };
 
     #[tokio::test]
@@ -89,7 +89,7 @@ mod tests {
 
         let thread_group = Vec3::default();
 
-        let worker = Worker {
+        let worker = GpuWork {
             file_name: file_path,
             work_data: vec![cpu_data],
             out_data: result,
@@ -97,11 +97,7 @@ mod tests {
         };
         let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
 
-        let (left, right) = oneshot::channel::<Vec<u32>>();
-        let work = GpuTaskChannel {
-            data: worker,
-            return_channel: left,
-        };
+        let (work, right) = GpuTaskChannel::new(worker);
 
         let cpu_computed_data = (0..10000).into_iter().map(|x| x * 2).collect::<Vec<u32>>();
 
@@ -127,25 +123,22 @@ mod tests {
         let file_path = String::from("gpu/gpgpu_tests/collatz.wgsl");
 
         let cpu_data = (1..26).into_iter().collect::<Vec<u32>>();
-        let result: Vec<u32> = vec![0;25];
+        let result: Vec<u32> = vec![0; 25];
 
         let thread_group = Vec3::default();
 
-        let worker = Worker {
+        let worker = GpuWork {
             file_name: file_path,
             work_data: vec![cpu_data],
             out_data: result,
             work_size: thread_group,
         };
+        let (work, right) = GpuTaskChannel::new(worker);
+
         let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
-
-        let (left, right) = oneshot::channel::<Vec<u32>>();
-        let work = GpuTaskChannel {
-            data: worker,
-            return_channel: left,
-        };
-
-        let cpu_computed_data = vec![0, 1, 7, 2, 5, 8, 16, 3, 19, 6, 14, 9, 9, 17, 17, 4, 12, 20, 20, 7, 7, 15, 15, 10, 23];
+        let cpu_computed_data = vec![
+            0, 1, 7, 2, 5, 8, 16, 3, 19, 6, 14, 9, 9, 17, 17, 4, 12, 20, 20, 7, 7, 15, 15, 10, 23,
+        ];
 
         tokio::spawn(async move {
             if let Err(_) = gpu_task(&mut right_mpsc).await {
