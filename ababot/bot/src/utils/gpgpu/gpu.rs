@@ -171,7 +171,10 @@ mod tests {
 
         let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
         let base: u32 = 2;
-        let cpu_computed_data = (0..100).into_iter().map(|x| x * base.pow(10)).collect::<Vec<u32>>();
+        let cpu_computed_data = (0..100)
+            .into_iter()
+            .map(|x| x * base.pow(10))
+            .collect::<Vec<u32>>();
 
         tokio::spawn(async move {
             if let Err(_) = gpu_task(&mut right_mpsc).await {
@@ -187,7 +190,6 @@ mod tests {
         for (a, b) in cpu_computed_data.into_iter().zip(res) {
             assert_eq!(a, b);
         }
-
     }
 
     #[tokio::test]
@@ -217,7 +219,10 @@ mod tests {
 
         let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
         let base: u32 = 2;
-        let cpu_computed_data = (0..100).into_iter().map(|x| x * base.pow(10)).collect::<Vec<u32>>();
+        let cpu_computed_data = (0..100)
+            .into_iter()
+            .map(|x| x * base.pow(10))
+            .collect::<Vec<u32>>();
         let cpu_computed_data_2 = (0..10000).into_iter().map(|x| x * 2).collect::<Vec<u32>>();
 
         tokio::spawn(async move {

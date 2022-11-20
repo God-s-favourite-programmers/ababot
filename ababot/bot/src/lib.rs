@@ -7,7 +7,6 @@ use serenity::model::application::interaction::Interaction;
 use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 
-
 pub mod background_tasks;
 pub mod commands;
 pub mod utils;
