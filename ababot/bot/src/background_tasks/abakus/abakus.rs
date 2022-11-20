@@ -107,13 +107,13 @@ pub async fn fetch_and_send(ctx: Arc<Context>) {
                         )
                         .field(
                             "When",
-                            &event.event_time.to_rfc2822().split('+').next().unwrap(),
+                            event.event_time.to_rfc2822().split('+').next().unwrap(),
                             false,
                         )
                         .field("Where", &event.event_location, false)
                         .url(format!("{}{}", EVENT_URL, event.id))
                         .image(&event.thumbnail)
-                        .footer(|f| f.text(&event.id))
+                        .footer(|f| f.text(event.id))
                 })
             })
             .await;
@@ -209,8 +209,8 @@ async fn parse_events(events: String) -> Vec<Event> {
         match time {
             Ok(t) => {
                 let until = t
-                    .date()
-                    .signed_duration_since(chrono::Local::today())
+                    .date_naive()
+                    .signed_duration_since(chrono::Utc::now().with_timezone(&Oslo).date_naive())
                     .num_days();
                 if until == 0 {
                     tracing::debug!("Event {} added", event.title);

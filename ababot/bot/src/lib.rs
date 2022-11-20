@@ -39,8 +39,8 @@ impl EventHandler for Handler {
         // Utenfor makro
         let (sender, mut receiver) = mpsc::channel::<GPU>(100);
         tokio::spawn(async move {
-            if let Err(_) = gpu_handler(&mut receiver).await {
-                panic!("Failed to execute gpu task");
+            if (gpu_handler(&mut receiver).await).is_err() {
+                tracing::error!("GPU handler failed");
             }
         });
 

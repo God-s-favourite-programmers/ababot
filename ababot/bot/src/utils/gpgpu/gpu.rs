@@ -39,13 +39,13 @@ where
     let sender = task.return_channel;
     let worker = task.data;
 
-    let shader = Shader::from_wgsl_file(&fw, &worker.file_name)?;
+    let shader = Shader::from_wgsl_file(fw, &worker.file_name)?;
 
-    let res = execute(&fw, shader, &worker)?;
+    let res = execute(fw, shader, &worker)?;
 
-    if let Err(_) = sender.send(res) {
+    if sender.send(res).is_err() {
         println!("Failed to send data back to main thread");
-    };
+    }
     Ok(())
 }
 
@@ -56,7 +56,7 @@ where
     let mut gpu_in_buffs: Vec<GpuBuffer<T>> = Vec::with_capacity(worker.work_data.len() + 1);
 
     for work in worker.work_data.iter() {
-        let noe = GpuBuffer::from_slice(&fw, work);
+        let noe = GpuBuffer::from_slice(fw, work);
         gpu_in_buffs.push(noe);
     }
 
@@ -68,7 +68,7 @@ where
         descriptor_set = descriptor_set.bind_buffer(buff, GpuBufferUsage::ReadOnly);
     }
     // Creating and binding output buffer
-    let gpu_out_buff = GpuBuffer::<T>::with_capacity(&fw, worker.out_data_len);
+    let gpu_out_buff = GpuBuffer::<T>::with_capacity(fw, worker.out_data_len);
     descriptor_set = descriptor_set.bind_buffer(&gpu_out_buff, GpuBufferUsage::ReadWrite);
 
     let kernel = Program::new(&shader, "main").add_descriptor_set(descriptor_set);
@@ -77,7 +77,7 @@ where
     let t = worker.work_size;
 
     // Execute kernel
-    Kernel::new(&fw, kernel).enqueue(t.x as u32, t.y as u32, t.z as u32);
+    Kernel::new(fw, kernel).enqueue(t.x as u32, t.y as u32, t.z as u32);
 
     let output = gpu_out_buff.read_vec_blocking()?;
     Ok(output)
@@ -107,7 +107,7 @@ mod tests {
         let worker = GpuWork {
             file_name: file_path,
             work_data: vec![cpu_data],
-            out_data_len: 100 as u64,
+            out_data_len: 100_u64,
             work_size: thread_group,
         };
         let (left_mpsc, mut right_mpsc) = mpsc::channel::<GPU>(1);
@@ -117,7 +117,7 @@ mod tests {
         let cpu_computed_data = (0..10000).into_iter().map(|x| x * 2).collect::<Vec<u32>>();
 
         tokio::spawn(async move {
-            if let Err(_) = gpu_handler(&mut right_mpsc).await {
+            if gpu_handler(&mut right_mpsc).await.is_err() {
                 panic!("Failed to execute gpu task");
             }
         });
@@ -155,7 +155,7 @@ mod tests {
         ];
 
         tokio::spawn(async move {
-            if let Err(_) = gpu_handler(&mut right_mpsc).await {
+            if gpu_handler(&mut right_mpsc).await.is_err() {
                 panic!("Failed to execute gpu task");
             }
         });
@@ -193,7 +193,7 @@ mod tests {
             .collect::<Vec<u32>>();
 
         tokio::spawn(async move {
-            if let Err(_) = gpu_handler(&mut right_mpsc).await {
+            if gpu_handler(&mut right_mpsc).await.is_err() {
                 panic!("Failed to execute gpu task");
             }
         });
@@ -242,13 +242,13 @@ mod tests {
         let cpu_computed_data_2 = (0..10000).into_iter().map(|x| x * 2).collect::<Vec<u32>>();
 
         tokio::spawn(async move {
-            if let Err(_) = gpu_handler(&mut right_mpsc).await {
+            if gpu_handler(&mut right_mpsc).await.is_err() {
                 panic!("Failed to execute gpu task");
             }
         });
         let left_arc = Arc::new(left_mpsc);
         let left_arc_2 = left_arc.clone();
-        let left_arc_3 = left_arc.clone();
+        let left_arc_3 = left_arc;
         tokio::spawn(async move {
             left_arc_2.send(GPU::GpuU32(work)).await.unwrap();
 
