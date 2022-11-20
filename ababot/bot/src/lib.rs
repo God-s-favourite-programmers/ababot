@@ -6,6 +6,10 @@ use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
+use tokio::sync::mpsc;
+
+use crate::utils::gpgpu::channels::GPU;
+use crate::utils::gpgpu::gpu::gpu_handler;
 
 pub mod background_tasks;
 pub mod commands;
@@ -33,10 +37,17 @@ impl EventHandler for Handler {
 
         // Check should not be neccessary as ready is only called once
         // Utenfor makro
-        let ctx = Arc::new(ctx);
+        let (sender, mut receiver) = mpsc::channel::<GPU>(100);
+        tokio::spawn(async move {
+            if let Err(_) = gpu_handler(&mut receiver).await {
+                panic!("Failed to execute gpu task");
+            }
+        });
 
+        let sender = Arc::new(sender);
+        let ctx = Arc::new(ctx);
         // Every background task has to handle its own setup, executing, and contiguos execution
-        dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
+        dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy, sender_cpy)");
         let guild_id = GuildId(
             env::var("GUILD_ID")
                 .expect("Expected GUILD_ID in environment")
@@ -60,15 +71,5 @@ impl EventHandler for Handler {
         }
         tracing::info!("Setup complete");
         println!("Bot ready");
-        // match test_gpgpu().await {
-        //     Ok(_) => {
-        //         tracing::debug!("GPGPU test succeeded");
-        //         println!("GPGPU test succeeded");
-        //     }
-        //     Err(e) => {
-        //         tracing::error!("GPGPU test failed: {:?}", e);
-        //         println!("GPGPU test failed: {:?}", e);
-        //     }
-        // }
     }
 }

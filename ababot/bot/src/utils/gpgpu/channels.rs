@@ -3,7 +3,7 @@ use tokio::sync::oneshot;
 use super::worker::{GpuWork, GpuWorkType};
 
 #[derive(Debug)]
-pub struct GpuTaskChannel<T>
+pub struct GpuTask<T>
 where
     T: GpuWorkType,
 {
@@ -11,7 +11,7 @@ where
     pub return_channel: oneshot::Sender<Vec<T>>,
 }
 
-impl<T> GpuTaskChannel<T>
+impl<T> GpuTask<T>
 where
     T: GpuWorkType,
 {
@@ -25,4 +25,17 @@ where
             right,
         )
     }
+}
+#[derive(Debug)]
+pub enum GPU {
+    GpuU8(GpuTask<u8>),
+    GpuU16(GpuTask<u16>),
+    GpuU32(GpuTask<u32>),
+    GpuU64(GpuTask<u64>),
+    GpuI8(GpuTask<i8>),
+    GpuI16(GpuTask<i16>),
+    GpuI32(GpuTask<i32>),
+    GpuI64(GpuTask<i64>),
+    GpuF32(GpuTask<f32>),
+    GpuF64(GpuTask<f64>),
 }

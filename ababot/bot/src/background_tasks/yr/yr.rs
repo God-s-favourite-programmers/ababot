@@ -3,14 +3,16 @@ use std::sync::Arc;
 use chrono::{DateTime, NaiveDateTime, Timelike, Utc};
 use chrono_tz::Europe::Oslo;
 use serenity::{model::prelude::ChannelId, prelude::Context};
+use tokio::sync::mpsc;
 
+use crate::utils::gpgpu::channels::GPU;
 use crate::utils::{get_channel_id, schedule, Time};
 
 const URL: &str =
     "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.415398&lon=10.395053";
 
 use crate::background_tasks::yr::types::{Root, Series};
-pub async fn run(ctx: Arc<Context>) {
+pub async fn run(ctx: Arc<Context>, _sender: Arc<mpsc::Sender<GPU>>) {
     let now = chrono::Utc::now().with_timezone(&Oslo);
     schedule(
         Time::EveryTime(

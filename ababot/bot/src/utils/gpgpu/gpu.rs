@@ -4,34 +4,49 @@ use gpgpu::{BufOps, DescriptorSet, Framework, GpuBuffer, GpuBufferUsage, Kernel,
 use tokio::sync::mpsc;
 
 use super::{
-    channels::GpuTaskChannel,
+    channels::{GpuTask, GPU},
     worker::{GpuWork, GpuWorkType},
 };
 
-pub async fn gpu_task<T>(
-    receiver: &mut mpsc::Receiver<GpuTaskChannel<T>>,
-) -> Result<(), Box<dyn Error>>
-where
-    T: GpuWorkType,
-{
-    let fw = Framework::default();
+pub async fn gpu_handler(receiver: &mut mpsc::Receiver<GPU>) -> Result<(), Box<dyn Error>> {
+    let mut fw = Framework::default();
+
     loop {
-        let task = match receiver.recv().await {
-            Some(w) => w,
+        let data = match receiver.recv().await {
+            Some(data) => data,
             None => continue,
         };
 
-        let sender = task.return_channel;
-        let worker = task.data;
-
-        let shader = Shader::from_wgsl_file(&fw, &worker.file_name)?;
-
-        let res = execute(&fw, shader, &worker)?;
-
-        if let Err(_) = sender.send(res) {
-            println!("Failed to send data back to main thread");
-        };
+        match data {
+            GPU::GpuU8(data) => gpu_task(data, &mut fw).await?,
+            GPU::GpuU16(data) => gpu_task(data, &mut fw).await?,
+            GPU::GpuU32(data) => gpu_task(data, &mut fw).await?,
+            GPU::GpuU64(data) => gpu_task(data, &mut fw).await?,
+            GPU::GpuI8(data) => gpu_task(data, &mut fw).await?,
+            GPU::GpuI16(data) => gpu_task(data, &mut fw).await?,
+            GPU::GpuI32(data) => gpu_task(data, &mut fw).await?,
+            GPU::GpuI64(data) => gpu_task(data, &mut fw).await?,
+            GPU::GpuF32(data) => gpu_task(data, &mut fw).await?,
+            GPU::GpuF64(data) => gpu_task(data, &mut fw).await?,
+        }
     }
+}
+
+pub async fn gpu_task<T>(task: GpuTask<T>, fw: &mut Framework) -> Result<(), Box<dyn Error>>
+where
+    T: GpuWorkType,
+{
+    let sender = task.return_channel;
+    let worker = task.data;
+
+    let shader = Shader::from_wgsl_file(&fw, &worker.file_name)?;
+
+    let res = execute(&fw, shader, &worker)?;
+
+    if let Err(_) = sender.send(res) {
+        println!("Failed to send data back to main thread");
+    };
+    Ok(())
 }
 
 fn execute<T>(fw: &Framework, shader: Shader, worker: &GpuWork<T>) -> Result<Vec<T>, Box<dyn Error>>
@@ -75,10 +90,11 @@ mod tests {
     use tokio::sync::mpsc;
 
     use crate::utils::gpgpu::{
-        channels::GpuTaskChannel,
-        gpu::gpu_task,
+        channels::{GpuTask, GPU},
         worker::{GpuWork, Vec3},
     };
+
+    use super::gpu_handler;
 
     #[tokio::test]
     pub async fn test_gpgpu() -> Result<(), Box<dyn Error>> {
@@ -94,19 +110,19 @@ mod tests {
             out_data_len: 100 as u64,
             work_size: thread_group,
         };
-        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
+        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GPU>(1);
 
-        let (work, right) = GpuTaskChannel::new(worker);
+        let (work, right) = GpuTask::new(worker);
 
         let cpu_computed_data = (0..10000).into_iter().map(|x| x * 2).collect::<Vec<u32>>();
 
         tokio::spawn(async move {
-            if let Err(_) = gpu_task(&mut right_mpsc).await {
+            if let Err(_) = gpu_handler(&mut right_mpsc).await {
                 panic!("Failed to execute gpu task");
             }
         });
 
-        left_mpsc.send(work).await.unwrap();
+        left_mpsc.send(GPU::GpuU32(work)).await.unwrap();
 
         let res = right.await.unwrap();
 
@@ -131,20 +147,20 @@ mod tests {
             out_data_len: 25,
             work_size: thread_group,
         };
-        let (work, right) = GpuTaskChannel::new(worker);
+        let (work, right) = GpuTask::new(worker);
 
-        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
+        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GPU>(1);
         let cpu_computed_data = vec![
             0, 1, 7, 2, 5, 8, 16, 3, 19, 6, 14, 9, 9, 17, 17, 4, 12, 20, 20, 7, 7, 15, 15, 10, 23,
         ];
 
         tokio::spawn(async move {
-            if let Err(_) = gpu_task(&mut right_mpsc).await {
+            if let Err(_) = gpu_handler(&mut right_mpsc).await {
                 panic!("Failed to execute gpu task");
             }
         });
 
-        left_mpsc.send(work).await.unwrap();
+        left_mpsc.send(GPU::GpuU32(work)).await.unwrap();
 
         let res = right.await.unwrap();
 
@@ -167,9 +183,9 @@ mod tests {
             out_data_len: 100,
             work_size: thread_group,
         };
-        let (work, right) = GpuTaskChannel::new(worker);
+        let (work, right) = GpuTask::new(worker);
 
-        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
+        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GPU>(1);
         let base: u32 = 2;
         let cpu_computed_data = (0..100)
             .into_iter()
@@ -177,12 +193,12 @@ mod tests {
             .collect::<Vec<u32>>();
 
         tokio::spawn(async move {
-            if let Err(_) = gpu_task(&mut right_mpsc).await {
+            if let Err(_) = gpu_handler(&mut right_mpsc).await {
                 panic!("Failed to execute gpu task");
             }
         });
 
-        left_mpsc.send(work).await.unwrap();
+        left_mpsc.send(GPU::GpuU32(work)).await.unwrap();
 
         let res = right.await.unwrap();
 
@@ -214,10 +230,10 @@ mod tests {
             out_data_len: 100,
             work_size: thread_group,
         };
-        let (work, right_1) = GpuTaskChannel::new(worker);
-        let (work_2, right_2) = GpuTaskChannel::new(worker_2);
+        let (work, right_1) = GpuTask::new(worker);
+        let (work_2, right_2) = GpuTask::new(worker_2);
 
-        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GpuTaskChannel<u32>>(1);
+        let (left_mpsc, mut right_mpsc) = mpsc::channel::<GPU>(1);
         let base: u32 = 2;
         let cpu_computed_data = (0..100)
             .into_iter()
@@ -226,7 +242,7 @@ mod tests {
         let cpu_computed_data_2 = (0..10000).into_iter().map(|x| x * 2).collect::<Vec<u32>>();
 
         tokio::spawn(async move {
-            if let Err(_) = gpu_task(&mut right_mpsc).await {
+            if let Err(_) = gpu_handler(&mut right_mpsc).await {
                 panic!("Failed to execute gpu task");
             }
         });
@@ -234,7 +250,7 @@ mod tests {
         let left_arc_2 = left_arc.clone();
         let left_arc_3 = left_arc.clone();
         tokio::spawn(async move {
-            left_arc_2.send(work).await.unwrap();
+            left_arc_2.send(GPU::GpuU32(work)).await.unwrap();
 
             let res = right_1.await.unwrap();
 
@@ -244,7 +260,7 @@ mod tests {
         });
 
         tokio::spawn(async move {
-            left_arc_3.send(work_2).await.unwrap();
+            left_arc_3.send(GPU::GpuU32(work_2)).await.unwrap();
 
             let res = right_2.await.unwrap();
 
