@@ -4,10 +4,8 @@ use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use reqwest::Client;
 use serenity::futures::future::join_all;
 use serenity::{model::prelude::ChannelId, prelude::Context};
-use tokio::sync::mpsc;
 use tokio::time::sleep;
 
-use crate::utils::gpgpu::channels::GPU;
 use crate::utils::{get_channel_id, schedule, Time};
 use crate::{
     background_tasks::abakus::types::{ApiEvent, Event},
@@ -15,12 +13,13 @@ use crate::{
 };
 use chrono_tz::Europe::Oslo;
 
+
 const EVENT_URL: &str = "https://abakus.no/events/";
 const REG_URL: &str = "https://lego.abakus.no/api/v1/events/";
 
 const START_TIME: (u32, u32, u32) = (8, 0, 0);
 
-pub async fn run(ctx: Arc<Context>, _sender: Arc<mpsc::Sender<GPU>>) {
+pub async fn run(ctx: Arc<Context>) {
     //TODO: spawn another thread to watch for reactions to messages
     let now = chrono::Utc::now().with_timezone(&Oslo);
     let today = now.date_naive();

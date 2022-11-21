@@ -1,4 +1,7 @@
-use tokio::sync::oneshot;
+use std::sync::Arc;
+
+use serenity::prelude::TypeMapKey;
+use tokio::sync::{oneshot, mpsc::Sender};
 
 use super::worker::{GpuWork, GpuWorkType};
 
@@ -38,4 +41,8 @@ pub enum GPU {
     GpuI64(GpuTask<i64>),
     GpuF32(GpuTask<f32>),
     GpuF64(GpuTask<f64>),
+}
+
+impl TypeMapKey for GPU {
+    type Value = Arc<Sender<GPU>>;
 }

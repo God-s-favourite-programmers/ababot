@@ -1,6 +1,6 @@
-use std::{env, sync::atomic::AtomicBool};
+use std::{env, sync::{atomic::AtomicBool, Arc}};
 
-use bot::{utils, Handler};
+use bot::{utils::{self, gpgpu::gpu::gpu_handler}, Handler};
 use serenity::{prelude::GatewayIntents, Client};
 
 #[tokio::main]
@@ -23,6 +23,19 @@ async fn main() {
     })
     .await
     .expect("Error creating client");
+
+    {
+        let mut data = client.data.write().await;
+        let (sender, mut receiver) = tokio::sync::mpsc::channel::<utils::gpgpu::channels::GPU>(100);
+
+        let sender_arc = Arc::new(sender);
+        data.insert::<utils::gpgpu::channels::GPU>(sender_arc);
+        tokio::spawn(async move {
+            if (gpu_handler(&mut receiver)).await.is_err() {
+                tracing::error!("GPU handler failed");
+            }
+        });
+    }
 
     // Finally, start a single shard, and start listening to events.
     //

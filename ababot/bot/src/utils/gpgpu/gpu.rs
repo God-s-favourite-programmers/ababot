@@ -10,7 +10,6 @@ use super::{
 
 pub async fn gpu_handler(receiver: &mut mpsc::Receiver<GPU>) -> Result<(), Box<dyn Error>> {
     let mut fw = Framework::default();
-
     loop {
         let data = match receiver.recv().await {
             Some(data) => data,
@@ -18,33 +17,37 @@ pub async fn gpu_handler(receiver: &mut mpsc::Receiver<GPU>) -> Result<(), Box<d
         };
 
         match data {
-            GPU::GpuU8(data) => gpu_task(data, &mut fw).await?,
-            GPU::GpuU16(data) => gpu_task(data, &mut fw).await?,
-            GPU::GpuU32(data) => gpu_task(data, &mut fw).await?,
-            GPU::GpuU64(data) => gpu_task(data, &mut fw).await?,
-            GPU::GpuI8(data) => gpu_task(data, &mut fw).await?,
-            GPU::GpuI16(data) => gpu_task(data, &mut fw).await?,
-            GPU::GpuI32(data) => gpu_task(data, &mut fw).await?,
-            GPU::GpuI64(data) => gpu_task(data, &mut fw).await?,
-            GPU::GpuF32(data) => gpu_task(data, &mut fw).await?,
-            GPU::GpuF64(data) => gpu_task(data, &mut fw).await?,
+            GPU::GpuU8(data) => gpu_task(data, &mut fw)?,
+            GPU::GpuU16(data) => gpu_task(data, &mut fw)?,
+            GPU::GpuU32(data) => gpu_task(data, &mut fw)?,
+            GPU::GpuU64(data) => gpu_task(data, &mut fw)?,
+            GPU::GpuI8(data) => gpu_task(data, &mut fw)?,
+            GPU::GpuI16(data) => gpu_task(data, &mut fw)?,
+            GPU::GpuI32(data) => gpu_task(data, &mut fw)?,
+            GPU::GpuI64(data) => gpu_task(data, &mut fw)?,
+            GPU::GpuF32(data) => gpu_task(data, &mut fw)?,
+            GPU::GpuF64(data) => gpu_task(data, &mut fw)?,
         }
     }
 }
 
-pub async fn gpu_task<T>(task: GpuTask<T>, fw: &mut Framework) -> Result<(), Box<dyn Error>>
+fn gpu_task<T>(task: GpuTask<T>, fw: &mut Framework) -> Result<(), Box<dyn Error>>
 where
     T: GpuWorkType,
 {
     let sender = task.return_channel;
     let worker = task.data;
 
-    let shader = Shader::from_wgsl_file(fw, &worker.file_name)?;
+    let shader =  Shader::from_wgsl_file(fw, &worker.file_name).map_err(|e| {
+        tracing::error!("Failed to load shader: {}", e);
+        e
+    })?;
 
     let res = execute(fw, shader, &worker)?;
 
     if sender.send(res).is_err() {
         println!("Failed to send data back to main thread");
+        tracing::error!("Failed to send data back to main thread");
     }
     Ok(())
 }

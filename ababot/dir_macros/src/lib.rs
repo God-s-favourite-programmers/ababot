@@ -142,7 +142,6 @@ pub fn long_running(input: TokenStream) -> TokenStream {
     for name in names {
         output.push_str(&format!(
             "let ctx_cpy = Arc::clone(&ctx);
-            let sender_cpy = Arc::clone(&sender);
             \ntokio::spawn(async move {{
                 {}::{}::{}.await;
             }});",
