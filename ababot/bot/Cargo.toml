@@ -47,4 +47,4 @@ chrono-tz = "0.8"
 reqwest = "0.11"
 
 # Threading
-rayon = "1.5"
+rayon = "1.6"
