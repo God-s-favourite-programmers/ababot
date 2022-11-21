@@ -13,7 +13,6 @@ use crate::{
 };
 use chrono_tz::Europe::Oslo;
 
-
 const EVENT_URL: &str = "https://abakus.no/events/";
 const REG_URL: &str = "https://lego.abakus.no/api/v1/events/";
 

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use serenity::prelude::TypeMapKey;
-use tokio::sync::{oneshot, mpsc::Sender};
+use tokio::sync::{mpsc::Sender, oneshot};
 
 use super::worker::{GpuWork, GpuWorkType};
 

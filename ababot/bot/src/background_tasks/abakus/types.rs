@@ -30,7 +30,8 @@ impl From<ApiEvent> for Event {
                 .description
                 .unwrap_or_else(|| "No description".to_string()),
             event_time: api_event
-                .event_time.unwrap_or_default()
+                .event_time
+                .unwrap_or_default()
                 .parse()
                 .unwrap_or_else(|_| Local::now()),
             event_location: api_event
