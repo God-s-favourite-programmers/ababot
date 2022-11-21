@@ -7,7 +7,6 @@ use serenity::{
 };
 use tracing::instrument;
 
-
 #[instrument(skip(ctx, command))]
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let pong = "Pong!".to_string();

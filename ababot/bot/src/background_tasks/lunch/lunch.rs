@@ -1,16 +1,13 @@
 use chrono_tz::Europe::Oslo;
-use serenity::{
-    prelude::Context,
-};
+use serenity::prelude::Context;
 
 use std::sync::Arc;
 
-use crate::utils::{get_channel_id, schedule, DAY_AS_SECONDS, Time};
-// example link: https://api.e24.no/content/v1/comics/2022-11-21 
+use crate::utils::{get_channel_id, schedule, Time, DAY_AS_SECONDS};
+// example link: https://api.e24.no/content/v1/comics/2022-11-21
 const URL: &str = "https://api.e24.no/content/v1/comics/";
 
 pub async fn run(ctx: Arc<Context>) {
-
     let now = chrono::Utc::now().with_timezone(&Oslo);
     let today = now.date_naive();
     let today_start = today.and_hms_opt(7, 0, 0);
@@ -58,7 +55,7 @@ pub async fn run(ctx: Arc<Context>) {
     }
 }
 
-async fn get_lunch(ctx: Arc<Context>){
+async fn get_lunch(ctx: Arc<Context>) {
     let now = chrono::Utc::now().with_timezone(&Oslo);
     let today = now.date_naive();
     let url = format!("{}{}", URL, today.format("%Y-%m-%d"));
@@ -71,12 +68,11 @@ async fn get_lunch(ctx: Arc<Context>){
         }
     };
 
-    let message = channel_id.send_message(&ctx.http, |m|{
-        m.embed(|e|{
-            e.title("Dagens LUNCH")
-            .image(url)
+    let message = channel_id
+        .send_message(&ctx.http, |m| {
+            m.embed(|e| e.title("Dagens LUNCH").image(url))
         })
-    }).await;
+        .await;
 
     if let Err(e) = message {
         tracing::warn!("Could not send lunch: {}", e);

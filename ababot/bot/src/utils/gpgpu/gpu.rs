@@ -38,7 +38,7 @@ where
     let sender = task.return_channel;
     let worker = task.data;
 
-    let shader =  Shader::from_wgsl_file(fw, &worker.file_name).map_err(|e| {
+    let shader = Shader::from_wgsl_file(fw, &worker.file_name).map_err(|e| {
         tracing::error!("Failed to load shader: {}", e);
         e
     })?;

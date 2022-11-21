@@ -1,6 +1,12 @@
-use std::{env, sync::{atomic::AtomicBool, Arc}};
+use std::{
+    env,
+    sync::{atomic::AtomicBool, Arc},
+};
 
-use bot::{utils::{self, gpgpu::gpu::gpu_handler}, Handler};
+use bot::{
+    utils::{self, gpgpu::gpu::gpu_handler},
+    Handler,
+};
 use serenity::{prelude::GatewayIntents, Client};
 
 #[tokio::main]
