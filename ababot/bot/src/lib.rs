@@ -32,9 +32,7 @@ impl EventHandler for Handler {
         tracing::info!("Connecting as {}", ready.user.name);
 
         // Check should not be neccessary as ready is only called once
-        // Utenfor makro
         let ctx = Arc::new(ctx);
-
         // Every background task has to handle its own setup, executing, and contiguos execution
         dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
         let guild_id = GuildId(

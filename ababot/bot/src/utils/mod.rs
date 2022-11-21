@@ -1,3 +1,5 @@
+pub mod gpgpu;
+
 use chrono_tz::{Europe::Oslo, Tz};
 use serenity::{
     http::Http,
