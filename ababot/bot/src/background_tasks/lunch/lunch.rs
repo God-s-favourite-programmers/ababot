@@ -13,7 +13,7 @@ pub async fn run(ctx: Arc<Context>) {
 
     let now = chrono::Utc::now().with_timezone(&Oslo);
     let today = now.date_naive();
-    let today_start = today.and_hms_opt(20, 32, 0);
+    let today_start = today.and_hms_opt(7, 0, 0);
     match today_start {
         Some(start) => {
             let start = start
@@ -35,7 +35,7 @@ pub async fn run(ctx: Arc<Context>) {
             schedule(
                 Time::EveryDeltaStartAt(
                     std::time::Duration::from_secs(DAY_AS_SECONDS),
-                    date.and_hms_opt(20, 32, 0)
+                    date.and_hms_opt(7, 0, 0)
                         .unwrap_or_else(|| {
                             tracing::error!("Could not set time for start date");
                             panic!("Could not set time for start date");
