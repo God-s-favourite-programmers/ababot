@@ -13,7 +13,7 @@ pub fn create_image(data: Vec<Series>) -> Result<RgbImage, Box<dyn Error>> {
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
         let r = (0.5 * x as f32) as u8;
         let b = (0.5 * y as f32) as u8;
-        *pixel = image::Rgb([r, 0, b]);
+        *pixel = image::Rgba([r, 0, b,255]);
     }
 
     imgbuf = brighten(&imgbuf, 100);
@@ -21,7 +21,7 @@ pub fn create_image(data: Vec<Series>) -> Result<RgbImage, Box<dyn Error>> {
     for x in (imgx / 10..imgx).step_by((imgx / 10).try_into().unwrap()) {
         for y in imgy / 2..imgy {
             let pixel = imgbuf.get_pixel_mut(x, y);
-            *pixel = image::Rgb([255, 255, 255]);
+            *pixel = image::Rgba([255, 255, 255,255]);
         }
     }
 
