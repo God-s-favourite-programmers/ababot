@@ -22,7 +22,7 @@ async fn main() {
     // Build our client.
     let mut client = Client::builder(
         token,
-        GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT,
+        GatewayIntents::all(),
     )
     .event_handler(Handler {
         loop_running: AtomicBool::new(false),
