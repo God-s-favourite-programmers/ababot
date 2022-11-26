@@ -6,6 +6,7 @@ use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
+use tracing::instrument;
 
 pub mod background_tasks;
 pub mod commands;
@@ -28,6 +29,7 @@ impl EventHandler for Handler {
         }
     }
 
+    #[instrument(skip(self, ctx, ready))]
     async fn ready(&self, ctx: Context, ready: Ready) {
         tracing::info!("Connecting as {}", ready.user.name);
 

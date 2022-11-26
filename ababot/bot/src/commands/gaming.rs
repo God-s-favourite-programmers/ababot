@@ -1,5 +1,3 @@
-
-
 use serenity::{
     builder::CreateApplicationCommand,
     model::prelude::{
@@ -43,21 +41,32 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     match (duration, unit, target_channel) {
         (Some(d), Some(u), Some(t)) => {
             let text_response = format!("Moving you back in {}{}", d, u);
-            let d = if u == "m" {
-                d * 60.0
-            } else {
-                d* 60.0 * 60.0
-            };
-            let _ = move_channel_users(d, t.await, command, ctx).await;
-            if let Err(why) = command
-                .create_interaction_response(&ctx.http, |response| {
-                    response
-                        .kind(InteractionResponseType::ChannelMessageWithSource)
-                        .interaction_response_data(|message| message.content(text_response))
-                })
-                .await
-            {
-                tracing::warn!("Failed to run command: {}", why);
+            let d = if u == "m" { d * 60.0 } else { d * 60.0 * 60.0 };
+            match move_channel_users(d, t.await, command, ctx).await {
+                Ok(_) => {
+                    if let Err(why) = command
+                        .create_interaction_response(&ctx.http, |response| {
+                            response
+                                .kind(InteractionResponseType::ChannelMessageWithSource)
+                                .interaction_response_data(|message| message.content(text_response))
+                        })
+                        .await
+                    {
+                        tracing::warn!("Failed to run command: {}", why);
+                    }
+                },
+                Err(_) => {
+                    if let Err(why) = command
+                        .create_interaction_response(&ctx.http, |response| {
+                            response
+                                .kind(InteractionResponseType::ChannelMessageWithSource)
+                                .interaction_response_data(|message| message.content("Something went wrong while executing command").ephemeral(true))
+                        })
+                        .await
+                    {
+                        tracing::warn!("Failed to run command: {}", why);
+                    }
+                }
             }
         }
         _ => {
@@ -80,6 +89,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     }
 }
 
+#[instrument(skip(command, ctx))]
 async fn move_channel_users(
     d: f64,
     target_channel: Result<ChannelId, &str>,
@@ -133,13 +143,20 @@ async fn move_channel_users(
             .await
             .unwrap()
         {
-            let _ = user.move_to_voice_channel(&http, original_channel).await;
+            let r = user.move_to_voice_channel(&http, original_channel).await;
+            match r {
+                Err(_) => {
+                    tracing::warn!("Failed to move user {:?}", user.nick)
+                },
+                Ok(_) => {}
+            }
         }
     });
 
     Ok(())
 }
 
+#[instrument(skip(command))]
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     tracing::debug!("Registering command game");
     command
