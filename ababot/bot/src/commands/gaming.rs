@@ -54,13 +54,17 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                     {
                         tracing::warn!("Failed to run command: {}", why);
                     }
-                },
+                }
                 Err(_) => {
                     if let Err(why) = command
                         .create_interaction_response(&ctx.http, |response| {
                             response
                                 .kind(InteractionResponseType::ChannelMessageWithSource)
-                                .interaction_response_data(|message| message.content("Something went wrong while executing command").ephemeral(true))
+                                .interaction_response_data(|message| {
+                                    message
+                                        .content("Something went wrong while executing command")
+                                        .ephemeral(true)
+                                })
                         })
                         .await
                     {
@@ -147,7 +151,7 @@ async fn move_channel_users(
             match r {
                 Err(_) => {
                     tracing::warn!("Failed to move user {:?}", user.nick)
-                },
+                }
                 Ok(_) => {}
             }
         }
