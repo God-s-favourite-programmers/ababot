@@ -4,7 +4,6 @@ use chrono::{DateTime};
 
 use serenity::{prelude::Context};
 
-
 const START_TIME: (u8, u8, u8) = (7, 0, 0);
 const URL: &str =
     "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.415398&lon=10.395053";

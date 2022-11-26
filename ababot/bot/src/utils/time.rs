@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use chrono::{Datelike, Weekday, Days};
+use chrono::{Datelike, Days, Weekday};
 use chrono_tz::{Europe::Oslo, Tz};
 use tracing::instrument;
 
@@ -154,7 +154,10 @@ where
     Async: std::future::Future<Output = ()>,
 {
     schedule(
-        Interval::EveryDeltaStartAt(Duration::from_secs(DAY_AS_SECONDS), time.nearest_unchecked()),
+        Interval::EveryDeltaStartAt(
+            Duration::from_secs(DAY_AS_SECONDS),
+            time.nearest_unchecked(),
+        ),
         action,
     )
     .await;
@@ -173,12 +176,14 @@ where
 {
     let mut nearest_time = time.nearest_unchecked();
     while nearest_time.weekday() != day {
-        nearest_time = nearest_time.checked_add_days(Days::new(1)).unwrap_or_else(|| {
-            tracing::error!("Date cannot be represented");
-            panic!("Date cannot be represented");
-        })
+        nearest_time = nearest_time
+            .checked_add_days(Days::new(1))
+            .unwrap_or_else(|| {
+                tracing::error!("Date cannot be represented");
+                panic!("Date cannot be represented");
+            })
     }
-    
+
     schedule(
         Interval::EveryDeltaStartAt(Duration::from_secs(WEEK_AS_SECONDS), nearest_time),
         action,

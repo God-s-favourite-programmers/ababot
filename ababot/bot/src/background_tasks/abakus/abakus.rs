@@ -26,7 +26,6 @@ pub async fn run(ctx: Arc<Context>) {
         || async { fetch_and_send(ctx.clone()).await },
     )
     .await;
-
 }
 
 pub async fn fetch_and_send(ctx: Arc<Context>) {

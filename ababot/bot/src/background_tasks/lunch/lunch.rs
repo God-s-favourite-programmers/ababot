@@ -3,7 +3,10 @@ use serenity::prelude::Context;
 
 use std::{sync::Arc, time::Duration};
 
-use crate::utils::{time::{Time, schedule, Interval, DAY_AS_SECONDS}, get_channel_id};
+use crate::utils::{
+    get_channel_id,
+    time::{schedule, Interval, Time, DAY_AS_SECONDS},
+};
 
 // example link: https://api.e24.no/content/v1/comics/2022-11-21
 const URL: &str = "https://api.e24.no/content/v1/comics/";

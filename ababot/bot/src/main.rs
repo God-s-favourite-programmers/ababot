@@ -20,15 +20,12 @@ async fn main() {
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
 
     // Build our client.
-    let mut client = Client::builder(
-        token,
-        GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT,
-    )
-    .event_handler(Handler {
-        loop_running: AtomicBool::new(false),
-    })
-    .await
-    .expect("Error creating client");
+    let mut client = Client::builder(token, GatewayIntents::all())
+        .event_handler(Handler {
+            loop_running: AtomicBool::new(false),
+        })
+        .await
+        .expect("Error creating client");
 
     {
         let mut data = client.data.write().await;
