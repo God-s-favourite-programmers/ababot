@@ -148,11 +148,8 @@ async fn move_channel_users(
             .unwrap()
         {
             let r = user.move_to_voice_channel(&http, original_channel).await;
-            match r {
-                Err(_) => {
+            if r.is_err() {
                     tracing::warn!("Failed to move user {:?}", user.nick)
-                }
-                Ok(_) => {}
             }
         }
     });
