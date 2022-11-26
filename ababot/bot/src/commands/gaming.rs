@@ -188,5 +188,6 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                 .name("channel")
                 .description("The channel to game in")
                 .kind(serenity::model::prelude::command::CommandOptionType::Channel)
+                .required(true)
         })
 }
