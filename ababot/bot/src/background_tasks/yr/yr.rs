@@ -4,12 +4,17 @@ use chrono::{DateTime, NaiveDateTime, Timelike, Utc};
 
 use serenity::{model::prelude::ChannelId, prelude::Context};
 
-
 const START_TIME: (u8, u8, u8) = (7, 0, 0);
 const URL: &str =
     "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.415398&lon=10.395053";
 
-use crate::{background_tasks::yr::types::{Root, Series}, utils::{time::{Time, schedule, Interval, DAY_AS_SECONDS}, get_channel_id}};
+use crate::{
+    background_tasks::yr::types::{Root, Series},
+    utils::{
+        get_channel_id,
+        time::{schedule, Interval, Time, DAY_AS_SECONDS},
+    },
+};
 pub async fn run(ctx: Arc<Context>) {
     let t = Time::new_unchecked(START_TIME.0, START_TIME.1, START_TIME.2).nearest_unchecked();
     schedule(

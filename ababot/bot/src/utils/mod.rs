@@ -1,7 +1,6 @@
 pub mod gpgpu;
 pub mod time;
 
-
 use serenity::{
     http::Http,
     model::prelude::{ChannelId, GuildId},
@@ -45,7 +44,6 @@ pub fn get_logger() -> (
 
     (subscriber, guard)
 }
-
 
 #[instrument(skip(http))]
 pub async fn get_channel_id<T>(name: T, http: &Http) -> Result<ChannelId, &'static str>
