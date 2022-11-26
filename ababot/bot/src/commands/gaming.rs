@@ -132,7 +132,10 @@ async fn move_channel_users(
             .await
             .unwrap()
         {
-            let _ = user.move_to_voice_channel(&http, target_channel).await;
+            let r = user.move_to_voice_channel(&http, target_channel).await;
+            if r.is_err() {
+                tracing::warn!("Failed to move user {:?}", user.nick)
+            }
         }
 
         tokio::time::sleep(std::time::Duration::from_secs_f64(d)).await;
