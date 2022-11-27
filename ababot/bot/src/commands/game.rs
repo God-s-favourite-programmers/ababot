@@ -10,8 +10,6 @@ use serenity::{
 };
 use tracing::instrument;
 
-use crate::utils::get_channel_id;
-
 #[instrument(skip(ctx, command))]
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut duration = None;
@@ -53,8 +51,8 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 }
                 Err(u) => {
                     let text = match u {
-                        true => {"Something went wrong, are you in a VC I have access to?"},
-                        false => {"Something went wrong while executing the command"}
+                        true => "Something went wrong, are you in a VC I have access to?",
+                        false => "Something went wrong while executing the command",
                     };
 
                     if let Err(why) = command
@@ -62,9 +60,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                             response
                                 .kind(InteractionResponseType::ChannelMessageWithSource)
                                 .interaction_response_data(|message| {
-                                    message
-                                        .content(text)
-                                        .ephemeral(true)
+                                    message.content(text).ephemeral(true)
                                 })
                         })
                         .await
