@@ -30,11 +30,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         }
 
         if option.name == "channel" {
-            target_channel = option
-                .value
-                .as_ref()
-                .and_then(|v| v.as_str())
-                .map(|name| get_channel_id(name, ctx.http.as_ref()))
+            target_channel = option.value.as_ref().and_then(|v| v.as_str())
         }
     }
 
@@ -42,7 +38,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         (Some(d), Some(u), Some(t)) => {
             let text_response = format!("Moving you back in {}{}", d, u);
             let d = if u == "m" { d * 60.0 } else { d * 60.0 * 60.0 };
-            match move_channel_users(d, t.await, command, ctx).await {
+            match move_channel_users(d, t, command, ctx).await {
                 Ok(_) => {
                     if let Err(why) = command
                         .create_interaction_response(&ctx.http, |response| {
@@ -55,14 +51,19 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                         tracing::warn!("Failed to run command: {}", why);
                     }
                 }
-                Err(_) => {
+                Err(u) => {
+                    let text = match u {
+                        true => {"Something went wrong, are you in a VC I have access to?"},
+                        false => {"Something went wrong while executing the command"}
+                    };
+
                     if let Err(why) = command
                         .create_interaction_response(&ctx.http, |response| {
                             response
                                 .kind(InteractionResponseType::ChannelMessageWithSource)
                                 .interaction_response_data(|message| {
                                     message
-                                        .content("Something went wrong while executing command")
+                                        .content(text)
                                         .ephemeral(true)
                                 })
                         })
@@ -93,33 +94,42 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     }
 }
 
+type UserError = bool;
+
 #[instrument(skip(command, ctx))]
 async fn move_channel_users(
     d: f64,
-    target_channel: Result<ChannelId, &str>,
+    target_channel: &str,
     command: &ApplicationCommandInteraction,
     ctx: &Context,
-) -> Result<(), ()> {
-    let mut original_channel = None;
-    for channel in command
-        .guild_id
-        .ok_or(())?
-        .channels(&ctx.http)
-        .await
-        .map_err(|_e| ())?
-    {
-        if !channel.1.is_text_based() {
-            for user in channel.1.members(&ctx.cache).await.unwrap() {
-                if command.member.as_ref().ok_or(())?.user.id == user.user.id {
-                    original_channel = Some(channel.clone());
-                }
-            }
-        }
-    }
-    let original_channel = original_channel.ok_or(())?.0;
-    let target_channel = target_channel.map_err(|_e| ())?;
+) -> Result<(), UserError> {
     let cache = ctx.cache.clone();
     let http = ctx.http.clone();
+    let guild = command
+        .guild_id
+        .ok_or_else(|| {
+            tracing::warn!("Could not retreive guild id");
+            false
+        })?
+        .to_guild_cached(&cache)
+        .ok_or_else(|| {
+            tracing::warn!("Could not retreive guild struct");
+            false
+        })?;
+
+    let original_channel = guild
+        .voice_states
+        .get(&command.user.id)
+        .ok_or_else(|| {
+            tracing::debug!("User is not in a VC");
+            true
+        })?
+        .channel_id
+        .ok_or(false)?;
+    let target_channel = ChannelId(target_channel.parse().map_err(|e| {
+        tracing::error!("Failed to parse channel ID: {:?}", e);
+        false
+    })?);
 
     tokio::spawn(async move {
         for user in original_channel
@@ -133,8 +143,13 @@ async fn move_channel_users(
             .unwrap()
         {
             let r = user.move_to_voice_channel(&http, target_channel).await;
-            if r.is_err() {
-                tracing::warn!("Failed to move user {:?}", user.nick)
+            if let Err(e) = r {
+                tracing::warn!(
+                    "Failed to move user {:?} to {:?}: {}",
+                    user.nick,
+                    target_channel,
+                    e
+                );
             }
         }
 
