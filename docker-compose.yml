@@ -10,8 +10,8 @@ services:
     
     # Settings
     environment:
-      - GUILD_ID=743914289714298933
-      - DISCORD_TOKEN=NDU2MzUxMjc5MDExMzMyMTA3.G6UoDE.1Rpq0qYJRsUjOuWufdlxHetAZg44PljtQA4PCk
+      - GUILD_ID=
+      - DISCORD_TOKEN=
       - LOG_LEVEL=info # defaults to info
       - TZ=Europe/Oslo
   
