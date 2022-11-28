@@ -633,7 +633,7 @@ dependencies = [
 [[package]]
 name = "gpgpu"
 version = "0.2.0"
-source = "git+https://github.com/UpsettingBoy/gpgpu-rs?branch=dev#dd0109538edd57c923db0f69182d605472cca346"
+source = "git+https://github.com/UpsettingBoy/gpgpu-rs?branch=dev#c33cd9eb54322949805c0753bb6a0166be1b2672"
 dependencies = [
  "bytemuck",
  "cfg-if",
