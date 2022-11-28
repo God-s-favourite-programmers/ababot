@@ -28,7 +28,7 @@ tracing-appender = { version = "0.2" }
 tokio = { version = "1", features =  ["full"] }
 
 # Serialization and Deserialization
-serde = "1.0.0"
+serde = "1.0.148"
 serde_json = "1.0.0"
 
 # Allows the usage of openssl with cross
