@@ -9,4 +9,5 @@ updates:
   ignore:
     - dependency-name: "semver"
     - dependency-name: "crates-io"
+    - dependency-name: "*"
       update-types: ["version-update:semver-patch"]
