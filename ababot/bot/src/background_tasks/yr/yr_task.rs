@@ -1,15 +1,18 @@
 use std::{sync::Arc, time::Duration};
 
-use chrono::{DateTime, NaiveDateTime, Timelike, Utc};
+use chrono::DateTime;
 
-use serenity::{model::prelude::ChannelId, prelude::Context};
+use serenity::prelude::Context;
 
 const START_TIME: (u8, u8, u8) = (7, 0, 0);
 const URL: &str =
     "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.415398&lon=10.395053";
 
 use crate::{
-    background_tasks::yr::types::{Root, Series},
+    background_tasks::yr::{
+        image::create_image,
+        types::{Root, Series},
+    },
     utils::{
         get_channel_id,
         time::{schedule, Interval, Time, DAY_AS_SECONDS},
@@ -42,52 +45,30 @@ async fn execute(ctx: Arc<Context>) {
         }
     };
 
-    let time = DateTime::<Utc>::from_utc(
-        NaiveDateTime::parse_from_str(&weather_serie.time, "%Y-%m-%dT%H:%M:%SZ").unwrap(),
-        Utc,
-    )
-    .format("%d/%m at %H:%M")
-    .to_string();
+    let image_message = match create_image(weather_serie) {
+        Ok(i) => i,
+        Err(e) => {
+            tracing::warn!("Could not create image. Reason: {}", e);
+            return;
+        }
+    };
 
-    let message = ChannelId(channel_id.0)
-        .send_message(&ctx.http, |m| {
-            m.embed(|e| {
-                e.title("Weather Report")
-                    .field("Time", time, false)
-                    .field(
-                        "Air temperature",
-                        weather_serie.data.instant.details.air_temperature,
-                        false,
-                    )
-                    .field(
-                        "Cloud area fraction",
-                        weather_serie.data.instant.details.cloud_area_fraction,
-                        false,
-                    )
-                    .field(
-                        "Relative humidity",
-                        weather_serie.data.instant.details.relative_humidity,
-                        false,
-                    )
-                    .field(
-                        "Wind from direction",
-                        degrees_to_cardinal(weather_serie.data.instant.details.wind_from_direction),
-                        false,
-                    )
-                    .field(
-                        "Wind speed",
-                        weather_serie.data.instant.details.wind_speed,
-                        false,
-                    )
-            })
-        })
-        .await;
-    if let Err(e) = message {
-        tracing::warn!("Could not send weather report to Discord: {}", e);
+    image_message.save("weather.png").unwrap();
+
+    let image_path = std::path::Path::new("weather.png");
+
+    if let Err(e) = channel_id
+        .send_files(&ctx.http, vec![image_path], |m| m)
+        .await
+    {
+        tracing::warn!("Could not send image. Reason: {}", e);
     }
+
+    // Delete the image after it has been sent
+    std::fs::remove_file(image_path).unwrap();
 }
 
-async fn fetch_today_weather() -> Result<Series, String> {
+async fn fetch_today_weather() -> Result<Vec<Series>, String> {
     let client = reqwest::Client::new();
     let response = client
         .get(URL)
@@ -109,23 +90,17 @@ fn parse_weather(response: String) -> Result<Vec<Series>, String> {
     Ok(weather.properties.timeseries)
 }
 
-fn get_latest_weather(weather: &mut [Series]) -> Result<Series, String> {
+fn get_latest_weather(weather: &mut [Series]) -> Result<Vec<Series>, String> {
     weather.sort_by(|a, b| {
         DateTime::parse_from_rfc3339(&a.time)
             .unwrap()
             .cmp(&DateTime::parse_from_rfc3339(&b.time).unwrap())
     });
-    let serie_at_12 = weather
-        .iter_mut()
-        .find(|s| DateTime::parse_from_rfc3339(&s.time).unwrap().hour() == 12);
-
-    if let Some(s) = serie_at_12 {
-        Ok(s.clone())
-    } else {
-        Err("No weather at 12".into())
-    }
+    Ok(weather.to_vec())
 }
 
+// TODO: Incorporate this to the image
+#[allow(dead_code)]
 fn degrees_to_cardinal(degrees: f64) -> String {
     let directions = [
         "North",

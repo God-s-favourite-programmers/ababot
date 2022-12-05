@@ -1,4 +1,4 @@
-mod stonk;
+mod stonk_task;
 mod types;
-pub use stonk::register;
-pub use stonk::run;
+pub use stonk_task::register;
+pub use stonk_task::run;
