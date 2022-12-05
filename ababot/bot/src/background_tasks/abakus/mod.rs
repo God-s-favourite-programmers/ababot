@@ -1,3 +1,3 @@
-mod abakus;
+mod abakus_task;
 mod types;
-pub use abakus::run;
+pub use abakus_task::run;

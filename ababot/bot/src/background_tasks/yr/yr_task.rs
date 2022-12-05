@@ -1,14 +1,23 @@
 use std::{sync::Arc, time::Duration};
 
-use chrono::{DateTime};
+use chrono::DateTime;
 
-use serenity::{prelude::Context};
+use serenity::prelude::Context;
 
 const START_TIME: (u8, u8, u8) = (7, 0, 0);
 const URL: &str =
     "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.415398&lon=10.395053";
 
-use crate::{background_tasks::yr::{types::{Root, Series}, image::create_image}, utils::{time::{Time, schedule, Interval, DAY_AS_SECONDS}, get_channel_id}};
+use crate::{
+    background_tasks::yr::{
+        image::create_image,
+        types::{Root, Series},
+    },
+    utils::{
+        get_channel_id,
+        time::{schedule, Interval, Time, DAY_AS_SECONDS},
+    },
+};
 pub async fn run(ctx: Arc<Context>) {
     let t = Time::new_unchecked(START_TIME.0, START_TIME.1, START_TIME.2).nearest_unchecked();
     schedule(
@@ -36,26 +45,27 @@ async fn execute(ctx: Arc<Context>) {
         }
     };
 
-    let image_message = match create_image(weather_serie)
-     {
+    let image_message = match create_image(weather_serie) {
         Ok(i) => i,
         Err(e) => {
             tracing::warn!("Could not create image. Reason: {}", e);
             return;
         }
-     };
+    };
 
     image_message.save("weather.png").unwrap();
 
     let image_path = std::path::Path::new("weather.png");
 
-    if let Err(e) = channel_id.send_files(&ctx.http, vec![image_path], |m| m).await {
+    if let Err(e) = channel_id
+        .send_files(&ctx.http, vec![image_path], |m| m)
+        .await
+    {
         tracing::warn!("Could not send image. Reason: {}", e);
     }
 
     // Delete the image after it has been sent
     std::fs::remove_file(image_path).unwrap();
-
 }
 
 async fn fetch_today_weather() -> Result<Vec<Series>, String> {

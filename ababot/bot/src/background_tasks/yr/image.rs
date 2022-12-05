@@ -4,7 +4,7 @@ use chrono::{DateTime, Local, Timelike};
 use chrono_tz::Europe::Oslo;
 use chrono_tz::Tz;
 use image::{
-    imageops::{brighten, flip_vertical_in_place, overlay},
+    imageops::{flip_vertical_in_place, overlay},
     RgbaImage,
 };
 use text_to_png::{Color, TextRenderer};
@@ -18,12 +18,10 @@ pub fn create_image(data: Vec<Series>) -> Result<RgbaImage, Box<dyn Error>> {
     let mut imgbuf = image::ImageBuffer::new(IMGX, IMGY);
 
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let r = (0.5 * x as f32) as u8;
-        let b = (0.5 * y as f32) as u8;
+        let r = (0.3 * x as f32) as u8;
+        let b = (0.3 * y as f32) as u8;
         *pixel = image::Rgba([r, 0, b, 255]);
     }
-
-    imgbuf = brighten(&imgbuf, 100);
 
     for x in (IMGX / 10..IMGX).step_by((IMGX / 10).try_into().unwrap()) {
         for y in IMGY / 2..IMGY {
@@ -81,7 +79,8 @@ pub fn create_image(data: Vec<Series>) -> Result<RgbaImage, Box<dyn Error>> {
 
     let current_date = Local::now().format("%d.%m").to_string();
     let renderer = TextRenderer::default();
-    let date_image = renderer.render_text_to_png_data(current_date, 128, Color::new(255,255,255))?;
+    let date_image =
+        renderer.render_text_to_png_data(current_date, 128, Color::new(255, 255, 255))?;
     let date_image = image::load_from_memory(&date_image.data)?;
     overlay(&mut imgbuf, &date_image, 100, 100);
 
@@ -109,10 +108,10 @@ fn add_rain(rain: Vec<f32>) -> RgbaImage {
     let mut imgbuf = RgbaImage::new(IMGX, IMGY);
 
     for step in (0u32..1000).step_by((IMGX / 10).try_into().unwrap()) {
-        for x in step..step + 100 {
+        for x in step + 1..step + 100 {
             for y in 0..scaled_rain[(x / 100) as usize].round() as u32 {
                 let pixel = imgbuf.get_pixel_mut(x, y);
-                *pixel = image::Rgba([29, 96, 242, 200]);
+                *pixel = image::Rgba([25, 82, 242, 255]);
             }
         }
     }
