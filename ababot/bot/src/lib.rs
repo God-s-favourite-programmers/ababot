@@ -8,6 +8,8 @@ use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 use tracing::instrument;
 
+use crate::utils::background_threads::ThreadStorage;
+
 pub mod background_tasks;
 pub mod commands;
 pub mod utils;
@@ -35,8 +37,18 @@ impl EventHandler for Handler {
 
         // Check should not be neccessary as ready is only called once
         let ctx = Arc::new(ctx);
-        // Every background task has to handle its own setup, executing, and contiguos execution
-        dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
+        let mut data = ctx.data.write().await;
+        let running = data
+            .get::<ThreadStorage>()
+            .expect("ThreadCounter not found in data")
+            .running;
+        if !running {
+            // Every background task has to handle its own setup, executing, and contiguous execution
+            dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
+            data.insert::<ThreadStorage>(Arc::new(ThreadStorage { running: true }));
+        } else {
+            tracing::info!("Background tasks already running");
+        }
         let guild_id = GuildId(
             env::var("GUILD_ID")
                 .expect("Expected GUILD_ID in environment")
