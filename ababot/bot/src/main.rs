@@ -4,7 +4,7 @@ use std::{
 };
 
 use bot::{
-    utils::{self, background_threads::ThreadCounter, gpgpu::gpu::gpu_handler},
+    utils::{self, background_threads::ThreadStorage, gpgpu::gpu::gpu_handler},
     Handler,
 };
 use serenity::{prelude::GatewayIntents, Client};
@@ -28,7 +28,7 @@ async fn main() {
         .expect("Error creating client");
 
     {
-        let thread_counter = Arc::new(ThreadCounter { running: false });
+        let thread_counter = Arc::new(ThreadStorage { running: false });
 
         let (sender, mut receiver) = tokio::sync::mpsc::channel::<utils::gpgpu::channels::GPU>(100);
         let sender_arc = Arc::new(sender);
@@ -39,7 +39,7 @@ async fn main() {
         });
 
         let mut data = client.data.write().await;
-        data.insert::<ThreadCounter>(thread_counter);
+        data.insert::<ThreadStorage>(thread_counter);
 
         data.insert::<utils::gpgpu::channels::GPU>(sender_arc);
     }

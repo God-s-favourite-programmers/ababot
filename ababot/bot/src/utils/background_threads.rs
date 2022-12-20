@@ -2,10 +2,10 @@ use std::sync::Arc;
 
 use serenity::prelude::TypeMapKey;
 
-pub struct ThreadCounter {
+pub struct ThreadStorage {
     pub running: bool,
 }
 
-impl TypeMapKey for ThreadCounter {
-    type Value = Arc<ThreadCounter>;
+impl TypeMapKey for ThreadStorage {
+    type Value = Arc<ThreadStorage>;
 }

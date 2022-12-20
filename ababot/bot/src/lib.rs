@@ -8,7 +8,7 @@ use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 use tracing::instrument;
 
-use crate::utils::background_threads::ThreadCounter;
+use crate::utils::background_threads::ThreadStorage;
 
 pub mod background_tasks;
 pub mod commands;
@@ -39,13 +39,13 @@ impl EventHandler for Handler {
         let ctx = Arc::new(ctx);
         let mut data = ctx.data.write().await;
         let running = data
-            .get::<ThreadCounter>()
+            .get::<ThreadStorage>()
             .expect("ThreadCounter not found in data")
             .running;
         if !running {
             // Every background task has to handle its own setup, executing, and contiguos execution
             dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
-            data.insert::<ThreadCounter>(Arc::new(ThreadCounter { running: true }));
+            data.insert::<ThreadStorage>(Arc::new(ThreadStorage { running: true }));
         } else {
             tracing::warn!("Background tasks already running");
             println!("Background tasks already running");
