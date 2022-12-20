@@ -43,12 +43,11 @@ impl EventHandler for Handler {
             .expect("ThreadCounter not found in data")
             .running;
         if !running {
-            // Every background task has to handle its own setup, executing, and contiguos execution
+            // Every background task has to handle its own setup, executing, and contiguous execution
             dir_macros::long_running!("bot/src/background_tasks" "background_tasks" "run(ctx_cpy)");
             data.insert::<ThreadStorage>(Arc::new(ThreadStorage { running: true }));
         } else {
-            tracing::warn!("Background tasks already running");
-            println!("Background tasks already running");
+            tracing::info!("Background tasks already running");
         }
         let guild_id = GuildId(
             env::var("GUILD_ID")
