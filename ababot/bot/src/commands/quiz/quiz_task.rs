@@ -81,7 +81,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         .timeout(Duration::from_secs(40))
         .build();
 
-    // TODO: Store values stored
     while let Some(interaction) = interaction_stream.next().await {
         let local_answer = interaction
             .data
@@ -127,6 +126,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     println!("{:?}", answer);
 
     channel_message.delete(&ctx.http).await.unwrap();
+    //TODO: Take results and send them as an embed
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
