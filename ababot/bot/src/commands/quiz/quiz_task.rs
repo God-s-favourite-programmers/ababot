@@ -77,7 +77,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut answer: HashMap<String, Vec<String>> = HashMap::new();
 
     let mut interaction_stream = channel_message
-        .await_component_interactions(&ctx)
+        .await_component_interactions(ctx)
         .timeout(Duration::from_secs(40))
         .build();
 
