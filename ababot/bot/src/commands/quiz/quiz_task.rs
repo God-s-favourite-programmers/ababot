@@ -4,8 +4,11 @@ use rand::seq::SliceRandom;
 use serenity::{
     builder::CreateApplicationCommand,
     futures::StreamExt,
-    model::prelude::interaction::{
-        application_command::ApplicationCommandInteraction, InteractionResponseType,
+    model::prelude::{
+        command::CommandOptionType,
+        interaction::{
+            application_command::ApplicationCommandInteraction, InteractionResponseType,
+        },
     },
     prelude::Context,
 };
@@ -34,22 +37,31 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 
     let quiz_2 = quiz.clone();
 
-    let channel_id = get_channel_id("quiz", &ctx.http).await.unwrap();
+    let channel_id = match get_channel_id("quiz", &ctx.http).await {
+        Ok(channel_id) => channel_id,
+        Err(e) => {
+            tracing::error!("Error getting channel id: {}", e);
+            return;
+        }
+    };
 
-    command
+    if let Err(why) = command
         .create_interaction_response(&ctx.http, |response| {
             response
                 .kind(InteractionResponseType::ChannelMessageWithSource)
                 .interaction_response_data(|message| message.content("Quiz time!"))
         })
         .await
-        .unwrap();
+    {
+        tracing::warn!("Failed to run command: {}", why);
+        return;
+    }
 
     let mut question_string = String::new();
     for (i, question) in quiz.iter().enumerate() {
         question_string.push_str(&format!("{}. {}\n", i + 1, question.question));
     }
-    let channel_message = channel_id
+    let channel_message = match channel_id
         .send_message(&ctx.http, |m| {
             m.content(question_string).components(|c| {
                 quiz.into_iter().fold(c, |c, question| {
@@ -71,14 +83,27 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             })
         })
         .await
-        .unwrap();
+    {
+        Ok(m) => m,
+        Err(e) => {
+            tracing::error!("Error sending quiz: {}", e);
+            return;
+        }
+    };
 
     let mut collected_answers: HashMap<String, Vec<String>> = HashMap::new();
     let mut answer: HashMap<String, Vec<String>> = HashMap::new();
 
+    let mut quiz_time = 1;
+    for option in &command.data.options {
+        if option.name == "time" {
+            quiz_time = option.value.as_ref().and_then(|v| v.as_u64()).unwrap_or(1);
+        }
+    }
+
     let mut interaction_stream = channel_message
         .await_component_interactions(ctx)
-        .timeout(Duration::from_secs(40))
+        .timeout(Duration::from_secs(quiz_time * 60))
         .build();
 
     while let Some(interaction) = interaction_stream.next().await {
@@ -93,12 +118,14 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             .entry(who_answered.clone())
             .or_insert_with(Vec::new)
             .push(local_answer);
-        interaction
+        if let Err(why) = interaction
             .create_interaction_response(&ctx, |r| {
                 r.kind(InteractionResponseType::DeferredUpdateMessage)
             })
             .await
-            .unwrap();
+        {
+            tracing::error!("Error responding to interaction: {:?}", why);
+        }
     }
     for question in &quiz_2 {
         for (name, values) in &collected_answers {
@@ -122,10 +149,11 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         }
     }
 
+    if let Err(why) = channel_message.delete(&ctx.http).await {
+        tracing::error!("Error deleting quiz: {:?}", why);
+    }
 
-    channel_message.delete(&ctx.http).await.unwrap();
-    //TODO: Take results and send them as an embed
-    channel_id
+    if let Err(why) = channel_id
         .send_message(&ctx.http, |m| {
             m.embed(|e| {
                 quiz_2.iter().fold(e, |e, question| {
@@ -133,13 +161,17 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                         question.question.clone(),
                         question.correct_answer.clone(),
                         false,
-                    ).title("Answers")
+                    )
+                    .title("Answers")
                 })
             })
         })
         .await
-        .unwrap();
-    channel_id
+    {
+        tracing::error!("Error sending answers: {:?}", why);
+    }
+
+    if let Err(why) = channel_id
         .send_message(&ctx.http, |m| {
             m.embed(|e| {
                 answer.keys().fold(e, |e, k| {
@@ -150,12 +182,24 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             })
         })
         .await
-        .unwrap();
+    {
+        tracing::error!("Error sending results: {:?}", why);
+    }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     tracing::debug!("Registering command quiz");
-    command.name("quiz").description("When you need a quiz")
+    command
+        .name("quiz")
+        .description("Answer these fiver questions in a limited amount of time")
+        .create_option(|opt| {
+            opt.name("time")
+                .description("Amount of time for the quiz")
+                .kind(CommandOptionType::Integer)
+                .min_int_value(1)
+                .max_int_value(5)
+                .required(false)
+        })
 }
 
 async fn fetch(url: &str) -> Result<String, Box<dyn std::error::Error>> {
