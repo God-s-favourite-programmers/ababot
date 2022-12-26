@@ -1,13 +1,17 @@
-use std::{error::Error, time::Duration};
+use std::{collections::HashMap, error::Error, time::Duration};
 
+use rand::seq::SliceRandom;
 use serenity::{
     builder::CreateApplicationCommand,
+    futures::StreamExt,
     model::prelude::{
-        command::CommandOptionType, interaction::{application_command::ApplicationCommandInteraction, InteractionResponseType}, component::ButtonStyle,
+        command::CommandOptionType,
+        interaction::{
+            application_command::ApplicationCommandInteraction, InteractionResponseType,
+        },
     },
-    prelude::Context, futures::StreamExt,
+    prelude::Context,
 };
-use tokio::time::sleep;
 
 use crate::utils::get_channel_id;
 
@@ -25,6 +29,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             ));
         }
     }
+    // url.push_str("limit=5");
     let response = match fetch(&url).await {
         Ok(response) => response,
         Err(e) => {
@@ -40,26 +45,39 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         }
     };
 
+    let quiz_2 = quiz.clone();
+
     let channel_id = get_channel_id("quiz", &ctx.http).await.unwrap();
 
     command
         .create_interaction_response(&ctx.http, |response| {
-            response.kind(InteractionResponseType::ChannelMessageWithSource)
-            .interaction_response_data(|message| message.content("Quiz time!"))
+            response
+                .kind(InteractionResponseType::ChannelMessageWithSource)
+                .interaction_response_data(|message| message.content("Quiz time!"))
         })
-        .await.unwrap();
+        .await
+        .unwrap();
 
+    let mut question_string = String::new();
+    for (i, question) in quiz.iter().enumerate() {
+        question_string.push_str(&format!("{}. {}\n", i + 1, question.question));
+    }
     let channel_message = channel_id
         .send_message(&ctx.http, |m| {
-            m.content("Quiz time!").components(|c| {
-                c.create_action_row(|row| {
-                    row.create_select_menu(|menu| {
-                        menu.custom_id("Todays question")
-                            .placeholder("Select an option");
-                        menu.options(|f| {
-                            f.create_option(|o| o.label("Option 1").value("1"))
-                                .create_option(|o| o.label("Option 2").value("2"))
-                                .create_option(|o| o.label("Option 3").value("3"))
+            m.content(question_string).components(|c| {
+                quiz.into_iter().fold(c, |c, question| {
+                    c.create_action_row(|row| {
+                        row.create_select_menu(|menu| {
+                            menu.custom_id(&question.id.to_string())
+                                .placeholder("Select an answer");
+                            menu.options(|f| {
+                                let mut options: Vec<String> = question.incorrect_answers.clone();
+                                options.push(question.correct_answer.clone());
+                                options.shuffle(&mut rand::thread_rng());
+                                options.into_iter().fold(f, |f, opt| {
+                                    f.create_option(|o| o.label(opt.clone()).value(opt.clone()))
+                                })
+                            })
                         })
                     })
                 })
@@ -68,20 +86,52 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         .await
         .unwrap();
 
-    println!("{:?}", quiz);
+    let mut collected_answers: HashMap<String, Vec<String>> = HashMap::new();
+    let mut answer: HashMap<String, Vec<String>> = HashMap::new();
 
-    let mut answer = 0;
-
-    let mut interaction_stream = channel_message.await_component_interactions(&ctx).timeout(Duration::from_secs(20)).build();
+    let mut interaction_stream = channel_message
+        .await_component_interactions(&ctx)
+        .timeout(Duration::from_secs(40))
+        .build();
 
     // TODO: Store values stored
     while let Some(interaction) = interaction_stream.next().await {
-        answer = interaction.data.values[0].parse::<i64>().unwrap();
-        interaction.create_interaction_response(&ctx, |r| {
-            r.kind(InteractionResponseType::DeferredUpdateMessage)
-        }).await.unwrap();
+        let local_answer = interaction
+            .data
+            .values
+            .get(0)
+            .unwrap_or(&String::from("No answer"))
+            .to_string();
+        let who_answered = interaction.user.name.clone();
+        collected_answers
+            .entry(who_answered.clone())
+            .or_insert_with(Vec::new)
+            .push(local_answer);
+        println!("{} answered", who_answered);
+        interaction
+            .create_interaction_response(&ctx, |r| {
+                r.kind(InteractionResponseType::DeferredUpdateMessage)
+            })
+            .await
+            .unwrap();
     }
-    println!("Answer: {}", answer);
+    for question in quiz_2 {
+        for (name, values) in &collected_answers {
+            let filtered_list = values
+                .iter()
+                .filter(|&x| {
+                    question.incorrect_answers.contains(x) || question.correct_answer == *x
+                })
+                .collect::<Vec<_>>();
+            if filtered_list.last().unwrap_or(&&String::from("")) == &&question.correct_answer {
+                answer.entry(name.clone()).or_insert_with(Vec::new).push("Correct".to_string());
+            } else {
+                answer.entry(name.clone()).or_insert_with(Vec::new).push("Incorrect".to_string());
+            }
+        }
+    }
+
+    println!("{:?}", answer);
 
     channel_message.delete(&ctx.http).await.unwrap();
 }
