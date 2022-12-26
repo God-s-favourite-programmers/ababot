@@ -113,11 +113,20 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             .get(0)
             .unwrap_or(&String::from("No answer"))
             .to_string();
-        let who_answered = interaction.user.name.clone();
+
+        let who_answered = interaction
+            .member
+            .as_ref()
+            .unwrap()
+            .nick
+            .clone()
+            .unwrap_or_else(|| interaction.user.name.clone());
+
         collected_answers
             .entry(who_answered.clone())
             .or_insert_with(Vec::new)
             .push(local_answer);
+
         if let Err(why) = interaction
             .create_interaction_response(&ctx, |r| {
                 r.kind(InteractionResponseType::DeferredUpdateMessage)
