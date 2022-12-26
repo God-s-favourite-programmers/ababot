@@ -93,7 +93,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             .entry(who_answered.clone())
             .or_insert_with(Vec::new)
             .push(local_answer);
-        println!("{} answered", who_answered);
         interaction
             .create_interaction_response(&ctx, |r| {
                 r.kind(InteractionResponseType::DeferredUpdateMessage)
@@ -113,17 +112,16 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 answer
                     .entry(name.clone())
                     .or_insert_with(Vec::new)
-                    .push("O".to_string());
+                    .push("🟢".to_string());
             } else {
                 answer
                     .entry(name.clone())
                     .or_insert_with(Vec::new)
-                    .push("X".to_string());
+                    .push("🔴".to_string());
             }
         }
     }
 
-    println!("{:?}", answer);
 
     channel_message.delete(&ctx.http).await.unwrap();
     //TODO: Take results and send them as an embed
