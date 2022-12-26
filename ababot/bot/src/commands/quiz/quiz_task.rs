@@ -101,7 +101,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             .await
             .unwrap();
     }
-    for question in quiz_2 {
+    for question in &quiz_2 {
         for (name, values) in &collected_answers {
             let filtered_list = values
                 .iter()
@@ -113,12 +113,12 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 answer
                     .entry(name.clone())
                     .or_insert_with(Vec::new)
-                    .push("Correct".to_string());
+                    .push("O".to_string());
             } else {
                 answer
                     .entry(name.clone())
                     .or_insert_with(Vec::new)
-                    .push("Incorrect".to_string());
+                    .push("X".to_string());
             }
         }
     }
@@ -127,6 +127,30 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 
     channel_message.delete(&ctx.http).await.unwrap();
     //TODO: Take results and send them as an embed
+    channel_id
+        .send_message(&ctx.http, |m| {
+            m.content("Results")
+                .embed(|e| {
+                    quiz_2.iter().fold(e, |e, question| {
+                        e.field(question.question.clone(), question.correct_answer.clone(), false)
+                    })
+                })
+            })
+        .await
+        .unwrap();
+    channel_id
+        .send_message(&ctx.http, |m| {
+            m.content("Results")
+                .embed(|e| {
+                answer.keys().fold(e, |e, k| {
+                    let user_answers = answer.get(k).unwrap();
+                    let result_string = user_answers.join(" ");
+                    e.field(k, result_string, false)
+                })
+            })
+        })
+        .await
+        .unwrap();
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
