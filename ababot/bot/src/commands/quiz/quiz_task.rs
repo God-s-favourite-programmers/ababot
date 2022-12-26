@@ -129,19 +129,21 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     //TODO: Take results and send them as an embed
     channel_id
         .send_message(&ctx.http, |m| {
-            m.content("Results")
-                .embed(|e| {
-                    quiz_2.iter().fold(e, |e, question| {
-                        e.field(question.question.clone(), question.correct_answer.clone(), false)
-                    })
+            m.content("Results").embed(|e| {
+                quiz_2.iter().fold(e, |e, question| {
+                    e.field(
+                        question.question.clone(),
+                        question.correct_answer.clone(),
+                        false,
+                    )
                 })
             })
+        })
         .await
         .unwrap();
     channel_id
         .send_message(&ctx.http, |m| {
-            m.content("Results")
-                .embed(|e| {
+            m.content("Results").embed(|e| {
                 answer.keys().fold(e, |e, k| {
                     let user_answers = answer.get(k).unwrap();
                     let result_string = user_answers.join(" ");
