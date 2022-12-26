@@ -4,11 +4,8 @@ use rand::seq::SliceRandom;
 use serenity::{
     builder::CreateApplicationCommand,
     futures::StreamExt,
-    model::prelude::{
-        command::CommandOptionType,
-        interaction::{
-            application_command::ApplicationCommandInteraction, InteractionResponseType,
-        },
+    model::prelude::interaction::{
+        application_command::ApplicationCommandInteraction, InteractionResponseType,
     },
     prelude::Context,
 };
@@ -17,20 +14,10 @@ use crate::utils::get_channel_id;
 
 use super::types::Quiz;
 
-const API_URL: &str = "https://the-trivia-api.com/api/questions?";
+const API_URL: &str = "https://the-trivia-api.com/api/questions?limit=5";
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
-    let mut url = String::from(API_URL);
-    for option in &command.data.options {
-        if option.name == "amount" {
-            url.push_str(&format!(
-                "limit={}",
-                option.value.as_ref().and_then(|v| v.as_i64()).unwrap_or(5)
-            ));
-        }
-    }
-    // url.push_str("limit=5");
-    let response = match fetch(&url).await {
+    let response = match fetch(API_URL).await {
         Ok(response) => response,
         Err(e) => {
             tracing::error!("Error fetching quiz: {}", e);
@@ -124,9 +111,15 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 })
                 .collect::<Vec<_>>();
             if filtered_list.last().unwrap_or(&&String::from("")) == &&question.correct_answer {
-                answer.entry(name.clone()).or_insert_with(Vec::new).push("Correct".to_string());
+                answer
+                    .entry(name.clone())
+                    .or_insert_with(Vec::new)
+                    .push("Correct".to_string());
             } else {
-                answer.entry(name.clone()).or_insert_with(Vec::new).push("Incorrect".to_string());
+                answer
+                    .entry(name.clone())
+                    .or_insert_with(Vec::new)
+                    .push("Incorrect".to_string());
             }
         }
     }
@@ -138,18 +131,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     tracing::debug!("Registering command quiz");
-    command
-        .name("quiz")
-        .description("When you need a quiz")
-        .create_option(|option| {
-            option
-                .name("amount")
-                .description("The number of questions in this quiz")
-                .kind(CommandOptionType::Integer)
-                .min_int_value(1)
-                .max_int_value(20)
-                .required(false)
-        })
+    command.name("quiz").description("When you need a quiz")
 }
 
 async fn fetch(url: &str) -> Result<String, Box<dyn std::error::Error>> {
