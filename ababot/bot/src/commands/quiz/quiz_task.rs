@@ -94,10 +94,10 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut collected_answers: HashMap<String, Vec<String>> = HashMap::new();
     let mut answer: HashMap<String, Vec<String>> = HashMap::new();
 
-    let mut quiz_time_limit = 1;
+    let mut quiz_time_limit = 3;
     for option in &command.data.options {
         if option.name == "time" {
-            quiz_time_limit = option.value.as_ref().and_then(|v| v.as_u64()).unwrap_or(1);
+            quiz_time_limit = option.value.as_ref().and_then(|v| v.as_u64()).unwrap_or(3);
         }
     }
 
