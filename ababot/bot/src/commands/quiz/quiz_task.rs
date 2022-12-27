@@ -101,21 +101,25 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         }
     }
 
-    let button_message = channel_id
+    let button_message = match channel_id
         .send_message(&ctx.http, |m| {
             m.content("Click the button to stop the quiz")
                 .components(|c| {
                     c.create_action_row(|row| {
                         row.create_button(|b| {
-                            b.label("Stop")
-                                .style(ButtonStyle::Danger)
-                                .custom_id("stop")
+                            b.label("Stop").style(ButtonStyle::Danger).custom_id("stop")
                         })
                     })
                 })
         })
         .await
-        .unwrap();
+    {
+        Ok(m) => m,
+        Err(e) => {
+            tracing::error!("Error sending quiz: {}", e);
+            return;
+        }
+    };
 
     let interaction_stream = Arc::new(RwLock::new(
         channel_message
