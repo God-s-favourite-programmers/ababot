@@ -14,7 +14,7 @@ pub struct Question {
     pub tags: Vec<String>,
     #[serde(rename = "type")]
     pub type_field: String,
-    pub difficulty: String,
+    pub difficulty: Option<String>,
     pub regions: Vec<Value>,
     pub is_niche: bool,
 }
