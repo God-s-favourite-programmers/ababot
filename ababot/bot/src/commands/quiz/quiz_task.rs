@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, time::Duration};
+use std::{collections::HashMap, error::Error, sync::Arc, time::Duration};
 
 use rand::seq::SliceRandom;
 use serenity::{
@@ -6,12 +6,14 @@ use serenity::{
     futures::StreamExt,
     model::prelude::{
         command::CommandOptionType,
+        component::ButtonStyle,
         interaction::{
             application_command::ApplicationCommandInteraction, InteractionResponseType,
         },
     },
-    prelude::Context,
+    prelude::{Context, RwLock},
 };
+use tokio::time::timeout;
 
 use crate::utils::get_channel_id;
 
@@ -34,8 +36,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             return;
         }
     };
-
-    let quiz_2 = quiz.clone();
 
     let channel_id = match get_channel_id("quiz", &ctx.http).await {
         Ok(channel_id) => channel_id,
@@ -64,7 +64,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let channel_message = match channel_id
         .send_message(&ctx.http, |m| {
             m.content(question_string).components(|c| {
-                quiz.into_iter().fold(c, |c, question| {
+                quiz.iter().fold(c, |c, question| {
                     c.create_action_row(|row| {
                         row.create_select_menu(|menu| {
                             menu.custom_id(&question.id.to_string())
@@ -94,49 +94,100 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut collected_answers: HashMap<String, Vec<String>> = HashMap::new();
     let mut answer: HashMap<String, Vec<String>> = HashMap::new();
 
-    let mut quiz_time = 1;
+    let mut quiz_time_limit = 1;
     for option in &command.data.options {
         if option.name == "time" {
-            quiz_time = option.value.as_ref().and_then(|v| v.as_u64()).unwrap_or(1);
+            quiz_time_limit = option.value.as_ref().and_then(|v| v.as_u64()).unwrap_or(1);
         }
     }
 
-    let mut interaction_stream = channel_message
+    let button_message = channel_id
+        .send_message(&ctx.http, |m| {
+            m.content("Click the button to stop the quiz")
+                .components(|c| {
+                    c.create_action_row(|row| {
+                        row.create_button(|b| {
+                            b.label("Stop")
+                                .style(ButtonStyle::Danger)
+                                .custom_id("stop")
+                        })
+                    })
+                })
+        })
+        .await
+        .unwrap();
+
+    let interaction_stream = Arc::new(RwLock::new(
+        channel_message
+            .await_component_interactions(ctx)
+            .timeout(Duration::from_secs(quiz_time_limit * 60))
+            .build(),
+    ));
+
+    let mut button_stream = button_message
         .await_component_interactions(ctx)
-        .timeout(Duration::from_secs(quiz_time * 60))
+        .timeout(Duration::from_secs(quiz_time_limit * 60))
         .build();
 
-    while let Some(interaction) = interaction_stream.next().await {
-        let local_answer = interaction
-            .data
-            .values
-            .get(0)
-            .unwrap_or(&String::from("No answer"))
-            .to_string();
+    let stream_clone = Arc::clone(&interaction_stream);
+    let ctx_clone = ctx.clone();
+    tokio::spawn(async move {
+        if let Some(interaction) = button_stream.next().await {
+            interaction
+                .create_interaction_response(&ctx_clone.http, |response| {
+                    response.kind(InteractionResponseType::DeferredUpdateMessage)
+                })
+                .await
+                .unwrap();
+        }
+        tracing::debug!("Stopping quiz early");
+        drop(stream_clone);
+    });
 
-        let who_answered = interaction
-            .member
-            .as_ref()
-            .unwrap()
-            .nick
-            .clone()
-            .unwrap_or_else(|| interaction.user.name.clone());
-
-        collected_answers
-            .entry(who_answered.clone())
-            .or_insert_with(Vec::new)
-            .push(local_answer);
-
-        if let Err(why) = interaction
-            .create_interaction_response(&ctx, |r| {
-                r.kind(InteractionResponseType::DeferredUpdateMessage)
-            })
-            .await
+    while Arc::strong_count(&interaction_stream) != 1 {
+        let other_stream_clone = Arc::clone(&interaction_stream);
+        let interaction = match timeout(
+            Duration::from_secs(1),
+            other_stream_clone.write().await.next(),
+        )
+        .await
         {
-            tracing::error!("Error responding to interaction: {:?}", why);
+            Ok(interaction) => interaction,
+            Err(_) => continue,
+        };
+
+        if let Some(interaction) = interaction {
+            let local_answer = interaction
+                .data
+                .values
+                .get(0)
+                .unwrap_or(&String::from("No answer"))
+                .to_string();
+
+            let who_answered = interaction
+                .member
+                .as_ref()
+                .unwrap()
+                .nick
+                .clone()
+                .unwrap_or_else(|| interaction.user.name.clone());
+
+            collected_answers
+                .entry(who_answered.clone())
+                .or_insert_with(Vec::new)
+                .push(local_answer);
+
+            if let Err(why) = interaction
+                .create_interaction_response(&ctx, |r| {
+                    r.kind(InteractionResponseType::DeferredUpdateMessage)
+                })
+                .await
+            {
+                tracing::error!("Error responding to interaction: {:?}", why);
+            }
         }
     }
-    for question in &quiz_2 {
+    for question in &quiz {
         for (name, values) in &collected_answers {
             let filtered_list = values
                 .iter()
@@ -161,11 +212,14 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     if let Err(why) = channel_message.delete(&ctx.http).await {
         tracing::error!("Error deleting quiz: {:?}", why);
     }
+    if let Err(why) = button_message.delete(&ctx.http).await {
+        tracing::error!("Error deleting quiz: {:?}", why);
+    }
 
     if let Err(why) = channel_id
         .send_message(&ctx.http, |m| {
             m.embed(|e| {
-                quiz_2.iter().fold(e, |e, question| {
+                quiz.iter().fold(e, |e, question| {
                     e.field(
                         question.question.clone(),
                         question.correct_answer.clone(),
@@ -211,7 +265,7 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
         })
 }
 
-async fn fetch(url: &str) -> Result<String, Box<dyn std::error::Error>> {
+async fn fetch(url: &str) -> Result<String, Box<dyn Error>> {
     let response = reqwest::get(url).await?;
     let body = response.text().await?;
     Ok(body)
