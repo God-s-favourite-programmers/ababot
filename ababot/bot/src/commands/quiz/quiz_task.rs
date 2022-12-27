@@ -137,12 +137,14 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let ctx_clone = ctx.clone();
     tokio::spawn(async move {
         if let Some(interaction) = button_stream.next().await {
-            interaction
+            if let Err(why) = interaction
                 .create_interaction_response(&ctx_clone.http, |response| {
                     response.kind(InteractionResponseType::DeferredUpdateMessage)
                 })
                 .await
-                .unwrap();
+            {
+                tracing::warn!("Failed to ACK button: {}", why);
+            }
         }
         tracing::debug!("Stopping quiz early");
         drop(stream_clone);
