@@ -17,7 +17,7 @@ doctest = false
 dir_macros = { path = "../dir_macros" }
 
 # Interface with the Discord API
-serenity = { version = "0.11", default-features = false, features = ["client", "builder", "model", "http", "gateway", "client", "cache", "utils", "rustls_backend"] }
+serenity = { version = "0.11", default-features = false, features = ["client", "builder", "model", "http", "gateway", "client", "cache", "utils", "rustls_backend", "collector"] }
 
 # Better logging
 tracing = "0.1"
