@@ -130,16 +130,16 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             response
                 .kind(InteractionResponseType::ChannelMessageWithSource)
                 .interaction_response_data(|m| {
-                    m.content(
-                        format!(
-                            "Not implemented, but should sleep for {} days, {} hours and {} minutes \nMessage: {}",
-                            time.num_days(),
-                            time.num_hours() % 24,
-                            time.num_minutes() % 60,
-                            message
-                        )
-                        .as_str(),
-                    )
+                    m.embed(|e| {
+                        e.title("Remind me")
+                            .description(format!(
+                                "I will remind you in {} days, {} hours and {} minutes",
+                                time.num_days(),
+                                time.num_hours() % 24,
+                                time.num_minutes() % 60
+                            ))
+                            .field("Message", message.as_str(), false)
+                    })
                     .ephemeral(!public)
                 })
         })
@@ -156,7 +156,13 @@ fn sleep_and_remind(time: chrono::Duration, message: String, ctx: &Context, user
         tokio::time::sleep(time.to_std().unwrap()).await;
         // Send DM to user
         if let Err(why) = user
-            .direct_message(&ctx.http, |m| m.content(message.as_str()))
+            .direct_message(&ctx.http, |m| {
+                m.embed(|e| {
+                    e.title("Reminder")
+                        .description(message.as_str())
+                        .color(0x00ff00)
+                })
+            })
             .await
         {
             tracing::warn!("Failed to send message: {:?}", why);
