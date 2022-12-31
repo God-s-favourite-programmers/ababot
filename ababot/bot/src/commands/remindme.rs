@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use dateparser::parse;
+use serde_json::json;
 use serenity::{
     builder::CreateApplicationCommand,
     model::{
@@ -47,7 +48,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                         message = sub_option
                             .value
                             .as_ref()
-                            .unwrap()
+                            .unwrap_or(&json!(""))
                             .as_str()
                             .unwrap_or("")
                             .to_string();
@@ -103,7 +104,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                         message = sub_option
                             .value
                             .as_ref()
-                            .unwrap()
+                            .unwrap_or(&json!(""))
                             .as_str()
                             .unwrap_or("")
                             .to_string();
@@ -112,7 +113,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                         public = sub_option
                             .value
                             .as_ref()
-                            .unwrap()
+                            .unwrap_or(&json!(false))
                             .as_bool()
                             .unwrap_or(false);
                     }
@@ -125,7 +126,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
             tracing::warn!("Unknown option {}", option.name);
         }
     }
-    command
+    if let Err(why) = command
         .create_interaction_response(&ctx.http, |response| {
             response
                 .kind(InteractionResponseType::ChannelMessageWithSource)
@@ -133,10 +134,12 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                     m.embed(|e| {
                         e.title("Remind me")
                             .description(format!(
-                                "I will remind you in {} days, {} hours and {} minutes",
-                                time.num_days(),
-                                time.num_hours() % 24,
-                                time.num_minutes() % 60
+                                "I will remind you at {}",
+                                chrono::Utc::now()
+                                    .checked_add_signed(time)
+                                    .unwrap()
+                                    .with_timezone(&chrono_tz::Tz::Europe__Oslo)
+                                    .format("%d/%m %H:%M")
                             ))
                             .field("Message", message.as_str(), false)
                     })
@@ -144,28 +147,54 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 })
         })
         .await
-        .unwrap();
+    {
+        tracing::warn!("Failed to send message: {:?}", why);
+    }
 
-    sleep_and_remind(time, message, ctx, &user);
+    sleep_and_remind(time, message, ctx, &user, command, public);
 }
 
-fn sleep_and_remind(time: chrono::Duration, message: String, ctx: &Context, user: &User) {
+fn sleep_and_remind(
+    time: chrono::Duration,
+    message: String,
+    ctx: &Context,
+    user: &User,
+    command: &ApplicationCommandInteraction,
+    public: bool,
+) {
     let ctx = ctx.clone();
     let user = user.clone();
+    let command = command.clone();
     tokio::spawn(async move {
         tokio::time::sleep(time.to_std().unwrap()).await;
         // Send DM to user
-        if let Err(why) = user
-            .direct_message(&ctx.http, |m| {
-                m.embed(|e| {
-                    e.title("Reminder")
-                        .description(message.as_str())
-                        .color(0x00ff00)
+        if !public {
+            if let Err(why) = user
+                .direct_message(&ctx.http, |m| {
+                    m.embed(|e| {
+                        e.title("Reminder")
+                            .description(message.as_str())
+                            .color(0x00ff00)
+                    })
                 })
-            })
-            .await
-        {
-            tracing::warn!("Failed to send message: {:?}", why);
+                .await
+            {
+                tracing::warn!("Failed to send message: {:?}", why);
+            }
+        } else {
+            if let Err(why) = command
+                .channel_id
+                .send_message(&ctx.http, |m| {
+                    m.embed(|e| {
+                        e.title("Reminder")
+                            .description(message.as_str())
+                            .color(0x00ff00)
+                    })
+                })
+                .await
+            {
+                tracing::warn!("Failed to send message: {:?}", why);
+            }
         }
     });
 }
