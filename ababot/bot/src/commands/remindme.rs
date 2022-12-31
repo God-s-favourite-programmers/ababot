@@ -181,20 +181,18 @@ fn sleep_and_remind(
             {
                 tracing::warn!("Failed to send message: {:?}", why);
             }
-        } else {
-            if let Err(why) = command
-                .channel_id
-                .send_message(&ctx.http, |m| {
-                    m.embed(|e| {
-                        e.title("Reminder")
-                            .description(message.as_str())
-                            .color(0x00ff00)
-                    })
+        } else if let Err(why) = command
+            .channel_id
+            .send_message(&ctx.http, |m| {
+                m.embed(|e| {
+                    e.title("Reminder")
+                        .description(message.as_str())
+                        .color(0x00ff00)
                 })
-                .await
-            {
-                tracing::warn!("Failed to send message: {:?}", why);
-            }
+            })
+            .await
+        {
+            tracing::warn!("Failed to send message: {:?}", why);
         }
     });
 }
