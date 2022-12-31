@@ -18,6 +18,7 @@ use serenity::{
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut time = chrono::Duration::zero();
     let mut message = String::new();
+    let mut public = false;
     let user = Arc::new(&command.user);
 
     for option in &command.data.options {
@@ -51,8 +52,16 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                             .unwrap_or("")
                             .to_string();
                     }
+                    "public" => {
+                        public = sub_option
+                            .value
+                            .as_ref()
+                            .unwrap()
+                            .as_bool()
+                            .unwrap_or(false);
+                    }
                     _ => {
-                        println!("Unknown option 1 {}", sub_option.name);
+                        tracing::warn!("Unknown option {}", sub_option.name);
                     }
                 }
             }
@@ -80,6 +89,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                                                 )
                                                 .as_str(),
                                             )
+                                            .ephemeral(true)
                                         })
                                 })
                                 .await
@@ -98,8 +108,16 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                             .unwrap_or("")
                             .to_string();
                     }
+                    "public" => {
+                        public = sub_option
+                            .value
+                            .as_ref()
+                            .unwrap()
+                            .as_bool()
+                            .unwrap_or(false);
+                    }
                     _ => {
-                        println!("Unknown option 2 {}", sub_option.name);
+                        tracing::warn!("Unknown option {}", sub_option.name);
                     }
                 }
             }
@@ -122,6 +140,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                         )
                         .as_str(),
                     )
+                    .ephemeral(!public)
                 })
         })
         .await
@@ -176,6 +195,12 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                         .description("Minutes from now")
                         .kind(CommandOptionType::Integer)
                 })
+                .create_sub_option(|opt| {
+                    opt.name("public")
+                        .description("Whether to send the reminder in a public channel")
+                        .kind(CommandOptionType::Boolean)
+                        .required(false)
+                })
         })
         .create_option(|option| {
             option
@@ -193,6 +218,12 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                         .description("The time to remind you of")
                         .kind(CommandOptionType::String)
                         .required(true)
+                })
+                .create_sub_option(|opt| {
+                    opt.name("public")
+                        .description("Whether to send the reminder in a public channel")
+                        .kind(CommandOptionType::Boolean)
+                        .required(false)
                 })
         })
 }
