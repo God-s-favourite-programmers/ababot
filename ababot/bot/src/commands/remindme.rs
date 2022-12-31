@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use dateparser::parse;
 use serde_json::json;
@@ -166,7 +166,7 @@ fn sleep_and_remind(
     let user = user.clone();
     let command = command.clone();
     tokio::spawn(async move {
-        tokio::time::sleep(time.to_std().unwrap()).await;
+        tokio::time::sleep(time.to_std().unwrap_or(Duration::from_secs(0))).await;
         // Send DM to user
         if !public {
             if let Err(why) = user
