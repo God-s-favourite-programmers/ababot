@@ -84,8 +84,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                                         .interaction_response_data(|m| {
                                             m.content(
                                                 format!(
-                                                    "I was not able to parse time\n
-                                                     {}",
+                                                    "I was not able to parse time\n{}",
                                                     parsed_time.err().unwrap()
                                                 )
                                                 .as_str(),
