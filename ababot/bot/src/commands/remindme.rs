@@ -1,17 +1,24 @@
+use std::sync::Arc;
+
 use dateparser::parse;
 use serenity::{
     builder::CreateApplicationCommand,
-    model::prelude::{
-        command::CommandOptionType,
-        interaction::{
-            application_command::ApplicationCommandInteraction, InteractionResponseType,
+    model::{
+        prelude::{
+            command::CommandOptionType,
+            interaction::{
+                application_command::ApplicationCommandInteraction, InteractionResponseType,
+            },
         },
+        user::User,
     },
     prelude::Context,
 };
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
     let mut time = chrono::Duration::zero();
+    let mut message = String::new();
+    let user = Arc::new(&command.user);
 
     for option in &command.data.options {
         if option.name == "form" {
@@ -35,8 +42,17 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                                 sub_option.value.as_ref().unwrap().as_i64().unwrap_or(0),
                             );
                     }
+                    "message" => {
+                        message = sub_option
+                            .value
+                            .as_ref()
+                            .unwrap()
+                            .as_str()
+                            .unwrap_or("")
+                            .to_string();
+                    }
                     _ => {
-                        panic!("Unknown sub option")
+                        println!("Unknown option 1 {}", sub_option.name);
                     }
                 }
             }
@@ -47,30 +63,86 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                         let parsed_time =
                             parse(sub_option.value.as_ref().unwrap().as_str().unwrap_or("0"));
                         if parsed_time.is_ok() {
-                            time = parsed_time.unwrap().date_naive().signed_duration_since(
-                                chrono::Utc::now().naive_utc().date(),
-                            );
+                            time = parsed_time
+                                .unwrap()
+                                .signed_duration_since(chrono::Utc::now())
                         } else {
-                            panic!("Could not parse time");
+                            if let Err(why) = command
+                                .create_interaction_response(&ctx.http, |response| {
+                                    response
+                                        .kind(InteractionResponseType::ChannelMessageWithSource)
+                                        .interaction_response_data(|m| {
+                                            m.content(
+                                                format!(
+                                                    "I was not able to parse time\n
+                                                     {}",
+                                                    parsed_time.err().unwrap()
+                                                )
+                                                .as_str(),
+                                            )
+                                        })
+                                })
+                                .await
+                            {
+                                tracing::warn!("Failed to send message: {:?}", why);
+                            }
+                            return;
                         }
                     }
+                    "message" => {
+                        message = sub_option
+                            .value
+                            .as_ref()
+                            .unwrap()
+                            .as_str()
+                            .unwrap_or("")
+                            .to_string();
+                    }
                     _ => {
-                        panic!("Unknown sub option")
+                        println!("Unknown option 2 {}", sub_option.name);
                     }
                 }
             }
         } else {
-            panic!("Unknown option");
+            tracing::warn!("Unknown option {}", option.name);
         }
     }
     command
         .create_interaction_response(&ctx.http, |response| {
             response
                 .kind(InteractionResponseType::ChannelMessageWithSource)
-                .interaction_response_data(|message| message.content("Comming soon!"))
+                .interaction_response_data(|m| {
+                    m.content(
+                        format!(
+                            "Not implemented, but should sleep for {} days, {} hours and {} minutes \nMessage: {}",
+                            time.num_days(),
+                            time.num_hours() % 24,
+                            time.num_minutes() % 60,
+                            message
+                        )
+                        .as_str(),
+                    )
+                })
         })
         .await
         .unwrap();
+
+    sleep_and_remind(time, message, ctx, &user);
+}
+
+fn sleep_and_remind(time: chrono::Duration, message: String, ctx: &Context, user: &User) {
+    let ctx = ctx.clone();
+    let user = user.clone();
+    tokio::spawn(async move {
+        tokio::time::sleep(time.to_std().unwrap()).await;
+        // Send DM to user
+        if let Err(why) = user
+            .direct_message(&ctx.http, |m| m.content(message.as_str()))
+            .await
+        {
+            tracing::warn!("Failed to send message: {:?}", why);
+        }
+    });
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
