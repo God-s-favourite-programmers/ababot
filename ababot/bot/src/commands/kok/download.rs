@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use serenity::{
     model::prelude::interaction::{
         application_command::ApplicationCommandInteraction, InteractionResponseType,
