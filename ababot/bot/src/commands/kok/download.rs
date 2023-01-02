@@ -6,6 +6,8 @@ use serenity::{
 };
 use tokio::fs::read;
 
+use super::types::Annonfile;
+
 const URL: &str = "https://api.anonfiles.com/upload";
 
 pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_str: &str) {
@@ -35,6 +37,7 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
             return;
         }
     };
+    let _parsed: Annonfile = serde_json::from_str(&response.text().await.unwrap()).unwrap();
 }
 
 async fn get_small(
