@@ -30,22 +30,33 @@ pub async fn save_small(
 }
 
 pub async fn save_big(ctx: &Context, command: &ModalSubmitInteraction) {
-    let string_answers = command.data.components[0]
+    command
+        .create_interaction_response(&ctx.http, |m| {
+            m.kind(InteractionResponseType::DeferredUpdateMessage)
+        })
+        .await
+        .unwrap();
+    println!("Saving big file");
+
+    let string_answers = command
+        .data
         .components
         .iter()
+        .filter_map(|row| row.components.get(0))
         .map(|comp| match comp {
             ActionRowComponent::InputText(input) => input.value.clone(),
             _ => panic!("Not an input text"),
         })
         .collect::<Vec<String>>();
-    let name = match string_answers.get(0) {
-        Some(name) => name,
-        None => return,
+
+    let (name, url) = match string_answers.get(0..2) {
+        Some([name, url]) => (name, url),
+        _ => {
+            error(ctx, command).await;
+            return;
+        }
     };
-    let url = match string_answers.get(1) {
-        Some(url) => url,
-        None => return,
-    };
+
     // File is big. Save the url
     let page = reqwest::get(url).await.unwrap().text().await.unwrap();
     let download_url = local_parse(page);
@@ -58,13 +69,22 @@ pub async fn save_big(ctx: &Context, command: &ModalSubmitInteraction) {
     let mut file = File::create(format!("{}.pdf", name)).await.unwrap();
     file.write_all(download_file.as_ref()).await.unwrap();
     command
-        .create_interaction_response(&ctx.http, |m| {
-            m.kind(InteractionResponseType::DeferredChannelMessageWithSource)
+        .create_followup_message(&ctx.http, |m| {
+            m.content(format!("Saved file as {}.pdf", name))
         })
         .await
         .unwrap();
     file.sync_all().await.unwrap();
     println!("Saved file as {}.pdf", name);
+}
+
+async fn error(ctx: &Context, command: &ModalSubmitInteraction) {
+    command
+        .create_followup_message(&ctx.http, |m| {
+            m.content("Something went wrong. Please try again")
+        })
+        .await
+        .unwrap();
 }
 
 fn local_parse(page: String) -> String {
@@ -86,12 +106,12 @@ pub async fn create_modal(ctx: &Context, command: &ApplicationCommandInteraction
             m.kind(InteractionResponseType::Modal)
                 .interaction_response_data(|d| {
                     d.content("Please select the file you want to download")
-                        .custom_id("download")
+                        .custom_id("kok")
                         .title("Download")
                         .components(|c| {
                             c.create_action_row(|row| {
                                 row.create_input_text(|menu| {
-                                    menu.custom_id("kok")
+                                    menu.custom_id("download")
                                         .placeholder("Download link")
                                         .label("Download link")
                                         .style(InputTextStyle::Short)
