@@ -1,8 +1,10 @@
-use std::time::Duration;
-
 use serenity::{
     model::prelude::{
-        component::InputTextStyle, interaction::application_command::ApplicationCommandInteraction,
+        component::{ActionRowComponent, InputTextStyle},
+        interaction::{
+            application_command::ApplicationCommandInteraction, modal::ModalSubmitInteraction,
+            InteractionResponseType,
+        },
     },
     prelude::Context,
 };
@@ -27,13 +29,25 @@ pub async fn save_small(
     file.sync_all().await.unwrap();
 }
 
-const TEMP_URL: &str = "https://anonfiles.com/j1GeG4P2y1/Julelapper_pdf";
-
-pub async fn save_big(ctx: &Context, command: &ApplicationCommandInteraction, name: &str) {
+pub async fn save_big(ctx: &Context, command: &ModalSubmitInteraction) {
+    let string_answers = command.data.components[0]
+        .components
+        .iter()
+        .map(|comp| match comp {
+            ActionRowComponent::InputText(input) => input.value.clone(),
+            _ => panic!("Not an input text"),
+        })
+        .collect::<Vec<String>>();
+    let name = match string_answers.get(0) {
+        Some(name) => name,
+        None => return,
+    };
+    let url = match string_answers.get(1) {
+        Some(url) => url,
+        None => return,
+    };
     // File is big. Save the url
-    let page = reqwest::get(TEMP_URL).await.unwrap().text().await.unwrap();
-    let placeholder_string = get_download_link(ctx, command).await;
-    println!("Placeholder string: {}", placeholder_string);
+    let page = reqwest::get(url).await.unwrap().text().await.unwrap();
     let download_url = local_parse(page);
     let download_file = reqwest::get(&download_url)
         .await
@@ -44,8 +58,8 @@ pub async fn save_big(ctx: &Context, command: &ApplicationCommandInteraction, na
     let mut file = File::create(format!("{}.pdf", name)).await.unwrap();
     file.write_all(download_file.as_ref()).await.unwrap();
     command
-        .create_followup_message(&ctx.http, |m| {
-            m.content(format!("Saved file as {}.pdf", name))
+        .create_interaction_response(&ctx.http, |m| {
+            m.kind(InteractionResponseType::DeferredChannelMessageWithSource)
         })
         .await
         .unwrap();
@@ -66,22 +80,32 @@ fn local_parse(page: String) -> String {
         .to_string()
 }
 
-async fn get_download_link(ctx: &Context, command: &ApplicationCommandInteraction) -> String {
-    let channel_message = match command
-        .channel_id
-        .send_message(&ctx.http, |m| {
-            m.content("Please send the download link")
-                .components(|comp| {
-                    comp.create_action_row(|row| {
-                        row.create_input_text(|input| {
-                            input
-                                .custom_id("download_link")
-                                .label("download")
-                                .style(InputTextStyle::Short)
-                                .placeholder("Download link")
-                                .required(true)
+pub async fn create_modal(ctx: &Context, command: &ApplicationCommandInteraction) {
+    match command
+        .create_interaction_response(&ctx.http, |m| {
+            m.kind(InteractionResponseType::Modal)
+                .interaction_response_data(|d| {
+                    d.content("Please select the file you want to download")
+                        .custom_id("download")
+                        .title("Download")
+                        .components(|c| {
+                            c.create_action_row(|row| {
+                                row.create_input_text(|menu| {
+                                    menu.custom_id("kok")
+                                        .placeholder("Download link")
+                                        .label("Download link")
+                                        .style(InputTextStyle::Short)
+                                })
+                            })
+                            .create_action_row(|row| {
+                                row.create_input_text(|menu| {
+                                    menu.custom_id("name")
+                                        .placeholder("Name")
+                                        .label("Name")
+                                        .style(InputTextStyle::Short)
+                                })
+                            })
                         })
-                    })
                 })
         })
         .await
@@ -89,23 +113,7 @@ async fn get_download_link(ctx: &Context, command: &ApplicationCommandInteractio
         Ok(m) => m,
         Err(e) => {
             println!("Error fetching: {:?}", e);
-            return String::new();
+            tracing::warn!("Not able to create modal")
         }
     };
-
-    let mut download_link = String::new();
-    let interaction = channel_message
-        .await_component_interaction(&ctx)
-        .timeout(Duration::from_secs(60))
-        .await
-        .unwrap();
-
-    if let Some(data) = interaction.data.values.get(0) {
-        download_link = data.as_str().to_string();
-    } else {
-        println!("No data");
-    }
-
-    download_link
 }
-

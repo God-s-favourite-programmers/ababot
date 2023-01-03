@@ -8,6 +8,7 @@ use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
 use tracing::instrument;
 
+use crate::commands::kok::save_big;
 use crate::utils::background_threads::ThreadStorage;
 
 pub mod background_tasks;
@@ -28,6 +29,19 @@ impl EventHandler for Handler {
 
             tracing::debug!("Executing command {input}");
             dir_macros::run_commands_async!("bot/src/commands" "commands" "run(&ctx,&command)");
+        } else if let Interaction::ModalSubmit(submit) = interaction {
+            let modal = submit.data.custom_id.as_str();
+            match modal {
+                "kok" => {
+                    tracing::debug!("Executing modal {modal}");
+                    save_big(&ctx, &submit).await;
+                }
+                &_ => {
+                    tracing::debug!("Modal {modal} not handled");
+                }
+            }
+        } else {
+            tracing::debug!("Interaction not handled");
         }
     }
 

@@ -12,7 +12,7 @@ use serenity::{
 
 use super::{
     download::get,
-    upload::{save_big, save_small},
+    upload::{create_modal, save_small},
 };
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
@@ -58,21 +58,8 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                         }
                     }
                 } else if sub_option.name == "big" {
-                    for sub_sub_option in &sub_option.options {
-                        if sub_sub_option.name == "name" {
-                            command
-                                .create_interaction_response(&ctx.http, |response| {
-                                    response.kind(
-                                        InteractionResponseType::DeferredChannelMessageWithSource,
-                                    )
-                                })
-                                .await
-                                .unwrap();
-                            let name = sub_sub_option.value.as_ref().unwrap().as_str().unwrap();
-                            save_big(ctx, command, name).await;
-                            return;
-                        }
-                    }
+                    create_modal(ctx, command).await;
+                    return;
                 }
             }
         }
@@ -109,12 +96,6 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                     sub.name("big")
                         .description("Files bigger than 8MB. Limit 5GB")
                         .kind(CommandOptionType::SubCommand)
-                        .create_sub_option(|opt| {
-                            opt.name("name")
-                                .description("Name of the kok")
-                                .kind(CommandOptionType::String)
-                                .required(true)
-                        })
                 })
         })
         .create_option(|option| {
