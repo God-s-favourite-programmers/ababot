@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::{path::{Path, PathBuf}};
 
 use reqwest::multipart::{Form, Part};
 use serenity::{
@@ -79,7 +79,7 @@ async fn get_big(
     name: String,
 ) -> Result<(), String> {
     let file_part = Part::bytes(file)
-        .file_name(name)
+        .file_name(name.clone())
         .mime_str("application/pdf")
         .unwrap();
     let form = Form::new().part("file", file_part);
@@ -100,7 +100,13 @@ async fn get_big(
     };
     command
         .create_followup_message(&ctx.http, |m| {
-            m.embed(|e| e.title("Kok").url(parsed.data.file.url.full))
+            m.embed(|e| {
+                e.title(name).url(parsed.data.file.url.full).field(
+                    "May not be valid after",
+                    "10 days", // TODO Get ten days from now
+                    false,
+                )
+            })
         })
         .await
         .map_err(|_| String::from("Error sending file"))?;
