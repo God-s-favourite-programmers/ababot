@@ -108,7 +108,7 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                 })
                 .create_sub_option(|sub| {
                     sub.name("big")
-                        .description("Files bigger than 8MB. Limit 5GB")
+                        .description("Files bigger than 8MB. Limit 20GB")
                         .kind(CommandOptionType::SubCommand)
                 })
         })
