@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use reqwest::multipart::{Form, Part};
 use serenity::{
     model::prelude::interaction::{
         application_command::ApplicationCommandInteraction, InteractionResponseType,
@@ -45,17 +46,16 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
                 return;
             }
         }
-    }
-    let form = reqwest::multipart::Form::new().part("file", reqwest::multipart::Part::bytes(file));
-    let client = reqwest::Client::new();
-    let response = match client.post(URL).multipart(form).send().await {
-        Ok(response) => response,
-        Err(_) => {
-            error(ctx, command, "Error uploading file").await;
-            return;
+    } else {
+        println!("File is too big");
+        match get_big(ctx, command, file, file_path.to_str().unwrap().to_string()).await {
+            Ok(_) => return,
+            Err(_) => {
+                error(ctx, command, "Error uploading file").await;
+                return;
+            }
         }
-    };
-    let _parsed: Annonfile = serde_json::from_str(&response.text().await.unwrap()).unwrap();
+    }
 }
 
 async fn get_small(
@@ -72,21 +72,46 @@ async fn get_small(
     Ok(())
 }
 
-async fn success(ctx: &Context, command: &ApplicationCommandInteraction, url: &str) {
+async fn get_big(
+    ctx: &Context,
+    command: &ApplicationCommandInteraction,
+    file: Vec<u8>,
+    name: String,
+) -> Result<(), String> {
+    let file_part = Part::bytes(file)
+        .file_name(name)
+        .mime_str("application/pdf")
+        .unwrap();
+    let form = Form::new().part("file", file_part);
+    let client = reqwest::Client::new();
+    let response = match client.post(URL).multipart(form).send().await {
+        Ok(response) => response,
+        Err(_) => {
+            error(ctx, command, "Error uploading file").await;
+            return Err(String::from("Error uploading file"));
+        }
+    };
+    let parsed: Annonfile = match serde_json::from_str(&response.text().await.unwrap()) {
+        Ok(parsed) => parsed,
+        Err(_) => {
+            error(ctx, command, "Error uploading file").await;
+            return Err(String::from("Error uploading file"));
+        }
+    };
     command
-        .create_interaction_response(&ctx.http, |m| {
-            m.kind(InteractionResponseType::ChannelMessageWithSource)
-                .interaction_response_data(|m| m.content(url))
+        .create_followup_message(&ctx.http, |m| {
+            m.embed(|e| e.title("Kok").url(parsed.data.file.url.full))
         })
         .await
-        .unwrap();
+        .map_err(|_| String::from("Error sending file"))?;
+
+    Ok(())
 }
 
 async fn error(ctx: &Context, command: &ApplicationCommandInteraction, error: &str) {
     command
-        .create_interaction_response(&ctx.http, |m| {
-            m.kind(InteractionResponseType::ChannelMessageWithSource)
-                .interaction_response_data(|m| m.content(error).ephemeral(true))
+        .create_followup_message(&ctx.http, |m| {
+            m.embed(|e| e.title("Kok").description(error))
         })
         .await
         .unwrap();
