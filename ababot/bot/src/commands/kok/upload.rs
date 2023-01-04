@@ -146,7 +146,6 @@ async fn error(ctx: &Context, command: &ModalSubmitInteraction) {
         .await
     {
         tracing::warn!("Not able to complete kok: {:?}", why);
-        return;
     }
 }
 

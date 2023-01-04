@@ -24,7 +24,7 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
         return;
     }
 
-    if file_str.is_empty() || file_str.contains("/") {
+    if file_str.is_empty() || file_str.contains('/') {
         error(ctx, command, "Illegal file type").await;
         return;
     }
@@ -48,20 +48,18 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
     // If file is smaller than 8MB, send it as an attachment
     if file.len() < 8_388_608 {
         match get_small(ctx, command, file_path).await {
-            Ok(_) => return,
+            Ok(_) => (),
             Err(_) => {
                 error(ctx, command, "Error sending file").await;
-                return;
             }
         }
     } else {
         tracing::debug!("Handling big file");
         match get_big(ctx, command, file, file_path.to_str().unwrap().to_string()).await {
             // Allowed unwrap() because file_path is properly handled in saving process
-            Ok(_) => return,
+            Ok(_) => (),
             Err(_) => {
                 error(ctx, command, "Error uploading file").await;
-                return;
             }
         }
     }
