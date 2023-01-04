@@ -142,8 +142,9 @@ async fn how_to(ctx: &Context, command: &ApplicationCommandInteraction) {
                         e.title("How to use kok").field(
                             "Save big files",
                             "First you go to the the URL linked above and upload your file.
-When you enter the slash command a popupwindow will appear.
+When you enter the slash command a popup window will appear.
 Enter the name you want the file to have and the download link from the website.
+No need to add .pdf or .txt or anything else.
 That's it!",
                             false,
                         ).field("Save small file",
