@@ -1,4 +1,4 @@
-use std::path::{Path};
+use std::path::Path;
 
 use reqwest::multipart::{Form, Part};
 use serenity::{
@@ -28,7 +28,7 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
         error(ctx, command, "Illegal file type").await;
         return;
     }
-    
+
     let mut base = String::from("kok/");
     if file_str.ends_with(".pdf") {
         base.push_str(file_str);
