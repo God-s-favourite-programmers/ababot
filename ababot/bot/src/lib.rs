@@ -6,6 +6,7 @@ use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
+use tokio::fs::create_dir;
 use tracing::instrument;
 
 use crate::commands::kok::save_big;
@@ -48,6 +49,11 @@ impl EventHandler for Handler {
     #[instrument(skip(self, ctx, ready))]
     async fn ready(&self, ctx: Context, ready: Ready) {
         tracing::info!("Connecting as {}", ready.user.name);
+
+        // Kok folder setup
+        create_dir("kok")
+            .await
+            .unwrap_or_else(|_| panic!("Could not create kok folder"));
 
         // Check should not be neccessary as ready is only called once
         let ctx = Arc::new(ctx);
