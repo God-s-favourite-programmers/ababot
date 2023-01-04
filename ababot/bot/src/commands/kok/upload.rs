@@ -17,7 +17,12 @@ pub async fn save_small(
     bytes: Vec<u8>,
 ) {
     // File is small. Save the pdf
-    let mut file = File::create(format!("{}.pdf", name)).await.unwrap();
+    let path = if name.ends_with(".pdf") {
+        name.to_string()
+    } else {
+        format!("{}.pdf", name)
+    };
+    let mut file = File::create(path).await.unwrap();
     file.write_all(&bytes).await.unwrap();
     command
         .create_followup_message(&ctx.http, |m| {
@@ -30,12 +35,15 @@ pub async fn save_small(
 }
 
 pub async fn save_big(ctx: &Context, command: &ModalSubmitInteraction) {
-    command
+    if let Err(why) = command
         .create_interaction_response(&ctx.http, |m| {
             m.kind(InteractionResponseType::DeferredUpdateMessage)
         })
         .await
-        .unwrap();
+    {
+        tracing::warn!("Not able to ack Modal: {:?}", why);
+        return;
+    }
     println!("Saving big file");
 
     let string_answers = command
@@ -45,7 +53,7 @@ pub async fn save_big(ctx: &Context, command: &ModalSubmitInteraction) {
         .filter_map(|row| row.components.get(0))
         .map(|comp| match comp {
             ActionRowComponent::InputText(input) => input.value.clone(),
-            _ => panic!("Not an input text"),
+            _ => panic!("Not an input text"), // This means the modal is changed in a way that is not supported
         })
         .collect::<Vec<String>>();
 
@@ -57,49 +65,88 @@ pub async fn save_big(ctx: &Context, command: &ModalSubmitInteraction) {
         }
     };
 
-    // File is big. Save the url
-    let page = reqwest::get(url).await.unwrap().text().await.unwrap();
-    let download_url = local_parse(page);
-    let download_file = reqwest::get(&download_url)
-        .await
-        .unwrap()
-        .bytes()
-        .await
-        .unwrap();
-    let mut file = File::create(format!("{}.pdf", name)).await.unwrap();
-    file.write_all(download_file.as_ref()).await.unwrap();
-    command
+    let page = match reqwest::get(url).await {
+        Ok(page) => {
+            if let Ok(page) = page.text().await {
+                page
+            } else {
+                error(ctx, command).await;
+                return;
+            }
+        }
+        Err(_) => {
+            error(ctx, command).await;
+            return;
+        }
+    }; // page provided by user
+    let download_url = local_parse(page); // The actuall download link
+    let download_file = match reqwest::get(&download_url).await {
+        Ok(file) => {
+            if let Ok(file) = file.bytes().await {
+                file
+            } else {
+                error(ctx, command).await;
+                return;
+            }
+        }
+        Err(_) => {
+            error(ctx, command).await;
+            return;
+        }
+    }; // The actuall file
+
+    // Create file
+    let mut file = if let Ok(file) = File::create(format!("{}.pdf", name)).await {
+        file
+    } else {
+        error(ctx, command).await;
+        return;
+    };
+
+    // Save file
+    if let Err(why) = file.write_all(download_file.as_ref()).await {
+        tracing::warn!("Not able to write to file: {:?}", why);
+        return;
+    }
+
+    if let Err(why) = command
         .create_followup_message(&ctx.http, |m| {
             m.content(format!("Saved file as {}.pdf", name))
         })
         .await
-        .unwrap();
-    file.sync_all().await.unwrap();
-    println!("Saved file as {}.pdf", name);
+    {
+        tracing::warn!("Not able to ack Modal: {:?}", why);
+    }
+    file.sync_all().await.unwrap(); // Very unliklely to fail at this point. It's to ensure file is actually saved.
 }
 
 async fn error(ctx: &Context, command: &ModalSubmitInteraction) {
-    command
+    if let Err(why) = command
         .create_followup_message(&ctx.http, |m| {
             m.content("Something went wrong. Please try again")
         })
         .await
-        .unwrap();
+    {
+        tracing::warn!("Not able to complete kok: {:?}", why);
+        return;
+    }
 }
 
 fn local_parse(page: String) -> String {
     let document = scraper::Html::parse_document(&page);
     let selector = scraper::Selector::parse("#download-url").unwrap();
-    document
+    match document
         .select(&selector)
         .next()
-        .unwrap()
-        .value()
-        .attr("href")
-        .unwrap()
-        .to_string()
+        .and_then(|e| e.value().attr("href"))
+    {
+        Some(url) => url.to_string(),
+        None => String::new(), // Handled by calling function
+    }
 }
 
+// Interaction handling to this Modal is handled in lib.rs file in the interaction_create function
+// before it is sent back down here to save_big function.
 pub async fn create_modal(ctx: &Context, command: &ApplicationCommandInteraction) {
     match command
         .create_interaction_response(&ctx.http, |m| {
