@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use serenity::{
     model::prelude::interaction::{
         application_command::ApplicationCommandInteraction, InteractionResponseType,
@@ -11,7 +13,23 @@ use super::types::Annonfile;
 const URL: &str = "https://api.anonfiles.com/upload";
 
 pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_str: &str) {
-    let file = match read(file_str).await {
+    command
+        .create_interaction_response(&ctx.http, |response| {
+            response.kind(InteractionResponseType::DeferredChannelMessageWithSource)
+        })
+        .await
+        .unwrap();
+
+    let file_path = if file_str.ends_with(".pdf") {
+        Path::new(file_str).to_owned()
+    } else {
+        Path::new(file_str)
+            .with_extension("pdf")
+            .as_path()
+            .to_owned()
+    };
+
+    let file = match read(&file_path).await {
         Ok(file) => file,
         Err(_) => {
             error(ctx, command, "Invalid file id").await;
@@ -20,7 +38,7 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
     };
     // If file is smaller than 8MB, send it as an attachment
     if file.len() < 8_388_608 {
-        match get_small(ctx, command, file_str).await {
+        match get_small(ctx, command, &file_path).await {
             Ok(_) => return,
             Err(_) => {
                 error(ctx, command, "Error sending file").await;
@@ -43,12 +61,12 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
 async fn get_small(
     ctx: &Context,
     command: &ApplicationCommandInteraction,
-    file: &str,
+    file: &PathBuf,
 ) -> Result<(), String> {
+    let path = Path::new(file);
+
     command
-        .create_followup_message(&ctx.http, |m| {
-            m.embed(|e| e.title("Kok").description("Kok").attachment(file))
-        })
+        .create_followup_message(&ctx.http, |m| m.embed(|e| e.title("Kok")).add_file(path))
         .await
         .map_err(|_| String::from("Error sending file"))?;
     Ok(())
