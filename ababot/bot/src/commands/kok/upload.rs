@@ -16,6 +16,17 @@ pub async fn save_small(
     name: &str,
     bytes: Vec<u8>,
 ) {
+    // Acknowledge user that file is being processed
+    if let Err(why) = command
+        .create_interaction_response(&ctx.http, |m| {
+            m.kind(InteractionResponseType::DeferredChannelMessageWithSource)
+        })
+        .await
+    {
+        tracing::warn!("Not able to ack Modal: {:?}", why);
+        return;
+    }
+
     // File is small. Save the pdf
     let path = if name.ends_with(".pdf") {
         name.to_string()
@@ -24,12 +35,17 @@ pub async fn save_small(
     };
     let mut file = File::create(path).await.unwrap();
     file.write_all(&bytes).await.unwrap();
-    command
+
+    // Respond to user
+    if let Err(why) = command
         .create_followup_message(&ctx.http, |m| {
             m.content(format!("Saved file as {}.pdf", name))
         })
         .await
-        .unwrap();
+    {
+        tracing::warn!("Not able to respond to user: {:?}", why);
+    }
+
     // Save file
     file.sync_all().await.unwrap();
 }

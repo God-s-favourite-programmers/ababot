@@ -20,7 +20,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         if option.name == "get" {
             for sub_option in &option.options {
                 if sub_option.name == "name" {
-                    let name = sub_option.value.as_ref().unwrap().as_str().unwrap();
+                    let name = sub_option.value.as_ref().unwrap().as_str().unwrap_or("kok");
                     get(ctx, command, name).await;
                     return;
                 }
@@ -34,24 +34,35 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                             name = sub_sub_option
                                 .value
                                 .as_ref()
-                                .unwrap()
+                                .unwrap() // Handled by Discord that this is a string
                                 .as_str()
-                                .unwrap()
+                                .unwrap_or("kok")
                                 .to_string();
                         } else if sub_sub_option.name == "file" {
                             if let CommandDataOptionValue::Attachment(file) =
                                 sub_sub_option.resolved.as_ref().unwrap()
+                            // Handled by Discord that this is a file
                             {
-                                command
-                                            .create_interaction_response(&ctx.http, |response| {
-                                                response.kind(
-                                                    InteractionResponseType::DeferredChannelMessageWithSource,
-                                                )
+                                let file_bytes = if let Ok(file) = file.download().await {
+                                    file
+                                } else {
+                                    tracing::warn!("Not able to download file");
+                                    if let Err(why) = command
+                                        .create_interaction_response(&ctx.http, |m| {
+                                            m.kind(
+                                                InteractionResponseType::ChannelMessageWithSource,
+                                            )
+                                            .interaction_response_data(|m| {
+                                                m.content("Not able to download file")
                                             })
-                                            .await
-                                            .unwrap();
-                                let bytes = file.download().await.unwrap();
-                                save_small(ctx, command, name.as_str(), bytes).await;
+                                        })
+                                        .await
+                                    {
+                                        tracing::warn!("Not able to respond to user: {:?}", why);
+                                    }
+                                    return;
+                                };
+                                save_small(ctx, command, name.as_str(), file_bytes).await;
                             }
 
                             return;
