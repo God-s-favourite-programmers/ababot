@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 use reqwest::multipart::{Form, Part};
 use serenity::{
@@ -28,15 +28,15 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
         error(ctx, command, "Illegal file type").await;
         return;
     }
-
-    let file_path = if file_str.ends_with(".pdf") {
-        Path::new(file_str).to_owned()
+    
+    let mut base = String::from("kok/");
+    if file_str.ends_with(".pdf") {
+        base.push_str(file_str);
     } else {
-        Path::new(file_str)
-            .with_extension("pdf")
-            .as_path()
-            .to_owned()
-    };
+        base.push_str(&format!("{}.pdf", file_str));
+    }
+
+    let file_path = Path::new(&base);
 
     let file = match read(&file_path).await {
         Ok(file) => file,
@@ -47,7 +47,7 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
     };
     // If file is smaller than 8MB, send it as an attachment
     if file.len() < 8_388_608 {
-        match get_small(ctx, command, &file_path).await {
+        match get_small(ctx, command, file_path).await {
             Ok(_) => return,
             Err(_) => {
                 error(ctx, command, "Error sending file").await;
@@ -70,12 +70,10 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
 async fn get_small(
     ctx: &Context,
     command: &ApplicationCommandInteraction,
-    file: &PathBuf,
+    file: &Path,
 ) -> Result<(), String> {
-    let path = Path::new(file);
-
     command
-        .create_followup_message(&ctx.http, |m| m.add_file(path))
+        .create_followup_message(&ctx.http, |m| m.add_file(file))
         .await
         .map_err(|_| String::from("Error sending file"))?;
     Ok(())
