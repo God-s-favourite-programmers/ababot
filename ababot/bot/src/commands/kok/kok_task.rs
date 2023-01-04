@@ -73,6 +73,9 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                     return;
                 }
             }
+        } else if option.name == "help" {
+            how_to(ctx, command).await;
+            return;
         }
     }
 }
@@ -121,4 +124,37 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                         .required(true)
                 })
         })
+        .create_option(|option| {
+            option
+                .name("help")
+                .description("How to use kok")
+                .kind(CommandOptionType::SubCommand)
+        })
+}
+
+const URL: &str = "https://anonfiles.com";
+async fn how_to(ctx: &Context, command: &ApplicationCommandInteraction) {
+    if let Err(why) = command
+        .create_interaction_response(&ctx.http, |m| {
+            m.kind(InteractionResponseType::ChannelMessageWithSource)
+                .interaction_response_data(|m| {
+                    m.embed(|e| {
+                        e.title("How to use kok").field(
+                            "Save big files",
+                            "First you go to the the URL linked above and upload your file.
+When you enter the slash command a popupwindow will appear.
+Enter the name you want the file to have and the download link from the website.
+That's it!",
+                            false,
+                        ).field("Save small file",
+                        "This is for files smaller than 8MB. Just enter the name and upload file directly on discord.",
+                        false).field("Get", "Enter the name of file you want", false)
+                        .url(URL)
+                    })
+                })
+        })
+        .await
+    {
+        tracing::warn!("Not able to send help: {:?}", why);
+    }
 }
