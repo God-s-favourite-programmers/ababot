@@ -47,15 +47,7 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
     };
     // If file is smaller than 8MB, send it as an attachment
     if file.len() < 8_388_608 {
-        match get_small(
-            ctx,
-            command,
-            &file_path,
-            file_path.to_str().unwrap().to_string(),
-            // Allowed unwrap() because file_path is properly handled in saving process
-        )
-        .await
-        {
+        match get_small(ctx, command, &file_path).await {
             Ok(_) => return,
             Err(_) => {
                 error(ctx, command, "Error sending file").await;
@@ -79,12 +71,11 @@ async fn get_small(
     ctx: &Context,
     command: &ApplicationCommandInteraction,
     file: &PathBuf,
-    name: String,
 ) -> Result<(), String> {
     let path = Path::new(file);
 
     command
-        .create_followup_message(&ctx.http, |m| m.embed(|e| e.title(name)).add_file(path))
+        .create_followup_message(&ctx.http, |m| m.add_file(path))
         .await
         .map_err(|_| String::from("Error sending file"))?;
     Ok(())
