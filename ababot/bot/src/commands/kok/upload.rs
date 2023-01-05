@@ -62,7 +62,6 @@ pub async fn save_big(ctx: &Context, command: &ModalSubmitInteraction) {
         tracing::warn!("Not able to ack Modal: {:?}", why);
         return;
     }
-    println!("Saving big file");
 
     let string_answers = command
         .data
@@ -196,8 +195,7 @@ pub async fn create_modal(ctx: &Context, command: &ApplicationCommandInteraction
     {
         Ok(m) => m,
         Err(e) => {
-            println!("Error fetching: {:?}", e);
-            tracing::warn!("Not able to create modal")
+            tracing::warn!("Not able to create modal: {:?}", e);
         }
     };
     if let Err(why) = command
