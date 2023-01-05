@@ -175,17 +175,17 @@ pub async fn create_modal(ctx: &Context, command: &ApplicationCommandInteraction
                         .components(|c| {
                             c.create_action_row(|row| {
                                 row.create_input_text(|menu| {
-                                    menu.custom_id("download")
-                                        .placeholder("Download link")
-                                        .label("Download link")
+                                    menu.custom_id("name")
+                                        .placeholder("Name")
+                                        .label("Name")
                                         .style(InputTextStyle::Short)
                                 })
                             })
                             .create_action_row(|row| {
                                 row.create_input_text(|menu| {
-                                    menu.custom_id("name")
-                                        .placeholder("Name")
-                                        .label("Name")
+                                    menu.custom_id("download")
+                                        .placeholder("Download link")
+                                        .label("Download link")
                                         .style(InputTextStyle::Short)
                                 })
                             })

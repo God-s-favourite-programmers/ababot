@@ -51,9 +51,10 @@ impl EventHandler for Handler {
         tracing::info!("Connecting as {}", ready.user.name);
 
         // Kok folder setup
-        create_dir("kok")
-            .await
-            .unwrap_or_else(|_| panic!("Could not create kok folder"));
+        match create_dir("kok").await {
+            Ok(_) => tracing::info!("Created kok folder"),
+            Err(_) => tracing::info!("Kok folder already exists"),
+        }
 
         // Check should not be neccessary as ready is only called once
         let ctx = Arc::new(ctx);

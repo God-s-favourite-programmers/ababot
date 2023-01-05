@@ -111,11 +111,16 @@ async fn get_big(
     command
         .create_followup_message(&ctx.http, |m| {
             m.embed(|e| {
-                e.title(name).url(parsed.data.file.url.full).field(
-                    "May not be valid after",
-                    "10 days", // TODO Get ten days from now
-                    false,
-                )
+                e.title(name.split("/").nth(1).unwrap_or("Kok"))
+                    .url(parsed.data.file.url.full)
+                    .field(
+                        "May not be valid after",
+                        chrono::Utc::now()
+                            .checked_add_signed(chrono::Duration::days(7))
+                            .unwrap()
+                            .format("%d/%m"),
+                        false,
+                    )
             })
         })
         .await
