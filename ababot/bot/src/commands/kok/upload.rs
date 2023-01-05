@@ -200,4 +200,12 @@ pub async fn create_modal(ctx: &Context, command: &ApplicationCommandInteraction
             tracing::warn!("Not able to create modal")
         }
     };
+    if let Err(why) = command
+        .create_followup_message(&ctx.http, |m| {
+            m.content("Please wait while I save the file")
+        })
+        .await
+    {
+        tracing::warn!("Not able to respond to user: {:?}", why);
+    }
 }
