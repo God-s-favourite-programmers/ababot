@@ -139,7 +139,8 @@ async fn how_to(ctx: &Context, command: &ApplicationCommandInteraction) {
             m.kind(InteractionResponseType::ChannelMessageWithSource)
                 .interaction_response_data(|m| {
                     m.embed(|e| {
-                        e.title("How to use kok").field(
+                        e.title("How to use kok").field("IMPORTANT", "This function is only supposed to be used with pdf files!", true)
+                        .field(
                             "Save big files",
                             "First you go to the the URL linked above and upload your file.
 When you enter the slash command a popup window will appear.

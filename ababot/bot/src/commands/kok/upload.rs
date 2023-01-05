@@ -239,7 +239,7 @@ async fn update_kok_catalogue(ctx: &Context, name: String, user: &User) {
     } else {
         name
     };
-    
+
     if let Err(why) = channel_id
         .send_message(&ctx.http, |m| {
             m.embed(|e| {
