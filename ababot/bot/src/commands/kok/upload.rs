@@ -96,7 +96,12 @@ pub async fn save_big(ctx: &Context, command: &ModalSubmitInteraction) {
             return;
         }
     }; // page provided by user
-    let download_url = local_parse(page); // The actuall download link
+    let download_url = if let Some(url) = local_parse(page) {
+        url
+    } else {
+        error(ctx, command).await;
+        return;
+    }; // The actuall download url
     let download_file = match reqwest::get(&download_url).await {
         Ok(file) => {
             if let Ok(file) = file.bytes().await {
@@ -148,17 +153,14 @@ async fn error(ctx: &Context, command: &ModalSubmitInteraction) {
     }
 }
 
-fn local_parse(page: String) -> String {
+pub fn local_parse(page: String) -> Option<String> {
     let document = scraper::Html::parse_document(&page);
     let selector = scraper::Selector::parse("#download-url").unwrap();
-    match document
+    document
         .select(&selector)
         .next()
         .and_then(|e| e.value().attr("href"))
-    {
-        Some(url) => url.to_string(),
-        None => String::new(), // Handled by calling function
-    }
+        .map(|s| s.to_string())
 }
 
 // Interaction handling to this Modal is handled in lib.rs file in the interaction_create function

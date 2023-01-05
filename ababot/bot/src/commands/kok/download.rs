@@ -9,7 +9,7 @@ use serenity::{
 };
 use tokio::fs::read;
 
-use super::types::Annonfile;
+use super::{types::Annonfile, upload::local_parse};
 
 const URL: &str = "https://api.anonfiles.com/upload";
 
@@ -108,11 +108,28 @@ async fn get_big(
         }
     };
 
+    let page = match reqwest::get(parsed.data.file.url.full).await {
+        Ok(page) => match page.text().await {
+            Ok(page) => page,
+            Err(_) => {
+                return Err(String::from("Error uploading file"));
+            }
+        },
+        Err(_) => {
+            return Err(String::from("Error uploading file"));
+        }
+    };
+    let url = if let Some(url) = local_parse(page) {
+        url
+    } else {
+        return Err(String::from("Error uploading file"));
+    };
+
     command
         .create_followup_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title(name.split('/').nth(1).unwrap_or("Kok"))
-                    .url(parsed.data.file.url.full)
+                    .url(url)
                     .field(
                         "May not be valid after",
                         chrono::Utc::now()
