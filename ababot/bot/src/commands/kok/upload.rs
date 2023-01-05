@@ -233,6 +233,13 @@ async fn update_kok_catalogue(ctx: &Context, name: String, user: &User) {
         .await
         .unwrap_or_else(|| user.name.clone());
 
+    // Remove .pdf from name if it exists
+    let name = if name.ends_with(".pdf") {
+        name[..name.len() - 4].to_string()
+    } else {
+        name
+    };
+    
     if let Err(why) = channel_id
         .send_message(&ctx.http, |m| {
             m.embed(|e| {
