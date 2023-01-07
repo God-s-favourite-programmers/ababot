@@ -25,7 +25,7 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
     }
 
     if file_str.is_empty() || file_str.contains('/') {
-        error(ctx, command, "Illegal file type").await;
+        error(ctx, command, "Illegal path").await;
         return;
     }
 
@@ -55,7 +55,7 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
         }
     } else {
         tracing::debug!("Handling big file");
-        match get_big(ctx, command, file, file_path.to_str().unwrap().to_string()).await {
+        match get_big(ctx, command, file, base).await {
             // Allowed unwrap() because file_path is properly handled in saving process
             Ok(_) => (),
             Err(_) => {
@@ -99,14 +99,15 @@ async fn get_big(
     };
 
     // Respone from Annonfile
-    let parsed: Annonfile = match serde_json::from_str(&response.text().await.unwrap()) {
-        // I have assumed that some text will be there to be parsed. Unwrap ok above
-        Ok(parsed) => parsed,
-        Err(_) => {
-            error(ctx, command, "Error uploading file").await;
-            return Err(String::from("Error uploading file"));
-        }
-    };
+    let parsed: Annonfile =
+        match serde_json::from_str(&response.text().await.unwrap_or("no response".to_string())) {
+            // I have assumed that some text will be there to be parsed. Unwrap ok above
+            Ok(parsed) => parsed,
+            Err(_) => {
+                error(ctx, command, "Error uploading file").await;
+                return Err(String::from("Error uploading file"));
+            }
+        };
 
     let page = match reqwest::get(parsed.data.file.url.full).await {
         Ok(page) => match page.text().await {
