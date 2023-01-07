@@ -6,8 +6,10 @@ use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::prelude::{GuildId, Ready};
 use serenity::prelude::{Context, EventHandler};
+use tokio::fs::create_dir;
 use tracing::instrument;
 
+use crate::commands::kok::save_big;
 use crate::utils::background_threads::ThreadStorage;
 
 pub mod background_tasks;
@@ -28,12 +30,31 @@ impl EventHandler for Handler {
 
             tracing::debug!("Executing command {input}");
             dir_macros::run_commands_async!("bot/src/commands" "commands" "run(&ctx,&command)");
+        } else if let Interaction::ModalSubmit(submit) = interaction {
+            let modal = submit.data.custom_id.as_str();
+            match modal {
+                "kok" => {
+                    tracing::debug!("Executing modal {modal}");
+                    save_big(&ctx, &submit).await;
+                }
+                &_ => {
+                    tracing::debug!("Modal {modal} not handled");
+                }
+            }
+        } else {
+            tracing::debug!("Interaction not handled");
         }
     }
 
     #[instrument(skip(self, ctx, ready))]
     async fn ready(&self, ctx: Context, ready: Ready) {
         tracing::info!("Connecting as {}", ready.user.name);
+
+        // Kok folder setup
+        match create_dir("kok").await {
+            Ok(_) => tracing::info!("Created kok folder"),
+            Err(_) => tracing::info!("Kok folder already exists"),
+        }
 
         // Check should not be neccessary as ready is only called once
         let ctx = Arc::new(ctx);

@@ -49,6 +49,7 @@ dateparser = "0.1.7"
 
 # HTTP requests
 reqwest = "0.11"
+scraper = "0.14.0"
 
 # Threading
 rayon = "1.6"
