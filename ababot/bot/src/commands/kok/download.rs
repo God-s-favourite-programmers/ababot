@@ -99,15 +99,19 @@ async fn get_big(
     };
 
     // Respone from Annonfile
-    let parsed: Annonfile =
-        match serde_json::from_str(&response.text().await.unwrap_or("no response".to_string())) {
-            // I have assumed that some text will be there to be parsed. Unwrap ok above
-            Ok(parsed) => parsed,
-            Err(_) => {
-                error(ctx, command, "Error uploading file").await;
-                return Err(String::from("Error uploading file"));
-            }
-        };
+    let parsed: Annonfile = match serde_json::from_str(
+        &response
+            .text()
+            .await
+            .unwrap_or_else(|_| "no response".to_string()),
+    ) {
+        // I have assumed that some text will be there to be parsed. Unwrap ok above
+        Ok(parsed) => parsed,
+        Err(_) => {
+            error(ctx, command, "Error uploading file").await;
+            return Err(String::from("Error uploading file"));
+        }
+    };
 
     let page = match reqwest::get(parsed.data.file.url.full).await {
         Ok(page) => match page.text().await {
