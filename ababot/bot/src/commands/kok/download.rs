@@ -148,9 +148,7 @@ async fn get_big(
 
 async fn error(ctx: &Context, command: &ApplicationCommandInteraction, error: &str) {
     if let Err(why) = command
-        .create_followup_message(&ctx.http, |m| {
-            m.embed(|e| e.title("Kok").description(error))
-        })
+        .create_followup_message(&ctx.http, |m| m.content(format!("Error: {}", error)))
         .await
     {
         tracing::warn!("Not able to send error message: {:?}", why);
