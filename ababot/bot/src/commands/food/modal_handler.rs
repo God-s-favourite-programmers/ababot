@@ -101,7 +101,7 @@ async fn create_response(
             .await
             .unwrap();
     let listener = channel_message
-        .await_component_interaction(&ctx)
+        .await_component_interaction(ctx)
         .timeout(Duration::minutes(2).to_std().unwrap())
         .await;
 

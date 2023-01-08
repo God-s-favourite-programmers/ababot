@@ -57,7 +57,7 @@ pub async fn create_recipe_post(
             m.embed(|e| {
                 e.title(name)
                     .field("Fremgangsmåte", steps, false)
-                    .field("Ingredienser", "­", false) // Invisible character in value field to make discord happy
+                    .field("Ingredienser", "\u{AD}", false) // Invisible character in value field to make discord happy
                     .fields(ingredients.iter().map(|i| {
                         (
                             i.name.clone(),
@@ -73,7 +73,7 @@ pub async fn create_recipe_post(
     }
 }
 
-fn get_name(body: &String) -> Result<String, String> {
+fn get_name(body: &str) -> Result<String, String> {
     let document = Html::parse_document(body);
     let selector = Selector::parse("h1[itemprop='name']").map_err(|e| e.to_string())?;
     let elements = document
@@ -83,7 +83,7 @@ fn get_name(body: &String) -> Result<String, String> {
     Ok(elements.text().collect::<Vec<_>>().join(" "))
 }
 
-fn get_steps(body: &String) -> Result<String, String> {
+fn get_steps(body: &str) -> Result<String, String> {
     let document = Html::parse_document(body);
     let selector =
         Selector::parse("span[itemprop='recipeInstructions']").map_err(|e| e.to_string())?;
@@ -94,7 +94,7 @@ fn get_steps(body: &String) -> Result<String, String> {
     Ok(elements.inner_html().replace("<br>", ""))
 }
 
-fn get_ingredients(body: &String) -> Result<Vec<Ingredient>, String> {
+fn get_ingredients(body: &str) -> Result<Vec<Ingredient>, String> {
     let document = Html::parse_document(body);
     let selector = Selector::parse("table.table_ingredienser_bilde").map_err(|e| e.to_string())?;
     let tr_selector = Selector::parse("tr").map_err(|e| e.to_string())?;
@@ -107,9 +107,9 @@ fn get_ingredients(body: &String) -> Result<Vec<Ingredient>, String> {
     let mut ingredients = Vec::new();
     for child in elements.select(&tr_selector) {
         let inner_selector = Selector::parse("td").map_err(|e| e.to_string())?;
-        let mut iterator = child.select(&inner_selector);
+        let iterator = child.select(&inner_selector);
         let mut temp = Vec::new();
-        while let Some(ingredient) = iterator.next() {
+        for ingredient in iterator {
             temp.push(ingredient.text().collect::<Vec<_>>().join(" "));
         }
         if temp.len() == 3
