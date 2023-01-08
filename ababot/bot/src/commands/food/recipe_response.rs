@@ -52,12 +52,12 @@ pub async fn create_recipe_post(
             return;
         }
     };
-    command
+    if let Err(why) = command
         .create_followup_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title(name)
-                    .field("Steps", steps, false)
-                    .field("Ingredienser", "See below", false)
+                    .field("Fremgangsmåte", steps, false)
+                    .field("Ingredienser", "­", false) // Invisible character in value field to make discord happy
                     .fields(ingredients.iter().map(|i| {
                         (
                             i.name.clone(),
@@ -68,7 +68,9 @@ pub async fn create_recipe_post(
             })
         })
         .await
-        .unwrap();
+    {
+        tracing::warn!("Error sending recipe: {:?}", why);
+    }
 }
 
 fn get_name(body: &String) -> Result<String, String> {
