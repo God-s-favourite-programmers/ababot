@@ -1,4 +1,5 @@
 pub mod dice;
+pub mod food;
 pub mod game;
 pub mod knock;
 pub mod kok;

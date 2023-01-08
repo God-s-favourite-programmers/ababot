@@ -9,6 +9,7 @@ use serenity::prelude::{Context, EventHandler};
 use tokio::fs::create_dir;
 use tracing::instrument;
 
+use crate::commands::food::modal_handler::handle_modal;
 use crate::commands::kok::save_big;
 use crate::utils::background_threads::ThreadStorage;
 
@@ -36,6 +37,10 @@ impl EventHandler for Handler {
                 "kok" => {
                     tracing::debug!("Executing modal {modal}");
                     save_big(&ctx, &submit).await;
+                }
+                "test" => {
+                    tracing::debug!("Executing modal {modal}");
+                    handle_modal(&ctx, &submit).await;
                 }
                 &_ => {
                     tracing::debug!("Modal {modal} not handled");
