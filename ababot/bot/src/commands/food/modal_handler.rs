@@ -56,7 +56,7 @@ pub async fn handle_modal(ctx: &Context, command: &ModalSubmitInteraction) {
             return;
         }
     };
-    
+
     create_response(ctx, command, &mut recipies).await;
 }
 
