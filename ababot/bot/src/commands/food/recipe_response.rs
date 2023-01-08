@@ -55,7 +55,8 @@ pub async fn create_recipe_post(
         }
     };
     if let Err(why) = command
-        .create_followup_message(&ctx.http, |m| {
+        .channel_id
+        .send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title(name)
                     .field("Fremgangsmåte", steps, false)
