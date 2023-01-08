@@ -14,8 +14,8 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
         .create_interaction_response(&ctx.http, |m| {
             m.kind(InteractionResponseType::Modal)
                 .interaction_response_data(|d| {
-                    d.content("Test")
-                        .custom_id("test")
+                    d.content("Food")
+                        .custom_id("food")
                         .title("Enter ingredients. På norsk :D")
                         .components(|c| {
                             c.create_action_row(|row| {

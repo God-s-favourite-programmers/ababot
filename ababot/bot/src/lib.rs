@@ -38,7 +38,7 @@ impl EventHandler for Handler {
                     tracing::debug!("Executing modal {modal}");
                     save_big(&ctx, &submit).await;
                 }
-                "test" => {
+                "food" => {
                     tracing::debug!("Executing modal {modal}");
                     handle_modal(&ctx, &submit).await;
                 }
