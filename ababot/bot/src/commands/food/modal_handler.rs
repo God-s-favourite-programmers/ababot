@@ -137,7 +137,7 @@ async fn get_recipes(url: &str) -> Result<Vec<Food>, String> {
     let elements = document
         .select(&primary_selector)
         .next()
-        .ok_or("No elements found")?;
+        .ok_or("Fant ingen oppskrift")?;
 
     let mut recipes = Vec::new();
     for element in elements.select(&tr_selector) {
