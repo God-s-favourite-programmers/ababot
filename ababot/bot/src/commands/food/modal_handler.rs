@@ -26,7 +26,6 @@ pub async fn handle_modal(ctx: &Context, command: &ModalSubmitInteraction) {
         })
         .await
         .unwrap();
-    println!("Modal submitted");
 
     let user_submitted_ingredients = &command
         .data
@@ -39,11 +38,7 @@ pub async fn handle_modal(ctx: &Context, command: &ModalSubmitInteraction) {
         })
         .filter(|input| !input.is_empty())
         .collect::<Vec<String>>();
-    println!("base url: {}", BASE_URL);
-    println!(
-        "user submitted ingredients: {:?}",
-        user_submitted_ingredients
-    );
+
     let mut url = BASE_URL.to_string();
     for (i, ingredient) in user_submitted_ingredients.iter().enumerate() {
         match i {
@@ -53,6 +48,7 @@ pub async fn handle_modal(ctx: &Context, command: &ModalSubmitInteraction) {
             _ => url.push_str(&format!("&fritekst_{}={}", i, ingredient)),
         }
     }
+
     let mut recipies = match get_recipes(&url).await {
         Ok(recipies) => recipies,
         Err(e) => {
@@ -60,6 +56,7 @@ pub async fn handle_modal(ctx: &Context, command: &ModalSubmitInteraction) {
             return;
         }
     };
+    
     create_response(ctx, command, &mut recipies).await;
 }
 

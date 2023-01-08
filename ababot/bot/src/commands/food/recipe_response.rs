@@ -24,6 +24,7 @@ pub async fn create_recipe_post(
         error(ctx, command, "Error fetching recipe".to_string()).await;
         return;
     };
+    
     let body = if let Ok(body) = response.text().await {
         body
     } else {
@@ -31,6 +32,7 @@ pub async fn create_recipe_post(
         error(ctx, command, "Error parsing recipe".to_string()).await;
         return;
     };
+
     let ingredients = match get_ingredients(&body) {
         Ok(ingredients) => ingredients,
         Err(e) => {
