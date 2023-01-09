@@ -10,7 +10,7 @@ use serenity::{
 };
 
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
-    command
+    if let Err(why) = command
         .create_interaction_response(&ctx.http, |m| {
             m.kind(InteractionResponseType::Modal)
                 .interaction_response_data(|d| {
@@ -67,7 +67,9 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) {
                 })
         })
         .await
-        .unwrap();
+    {
+        tracing::warn!("Error sending modal: {}", why);
+    }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

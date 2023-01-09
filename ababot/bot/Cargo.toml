@@ -61,3 +61,6 @@ bytemuck = "1.12.3"
 # Image manipulation
 image = "0.24.5"
 text-to-png = "0.2.0"
+
+# Allocator
+mimalloc = "0.1.34"
