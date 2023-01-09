@@ -73,15 +73,6 @@ async fn create_response(
         return;
     };
 
-    if let Err(why) = command
-        .create_interaction_response(&ctx.http, |m| {
-            m.kind(InteractionResponseType::DeferredUpdateMessage)
-        })
-        .await
-    {
-        tracing::warn!("Failed to ACK message: {:?}", why);
-    }
-
     let channel_message =
         command
             .channel_id
