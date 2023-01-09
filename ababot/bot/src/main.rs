@@ -9,6 +9,11 @@ use bot::{
 };
 use serenity::{prelude::GatewayIntents, Client};
 
+use mimalloc::MiMalloc;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
+
 #[tokio::main]
 async fn main() {
     let (subscriber, _guard) = utils::get_logger();
