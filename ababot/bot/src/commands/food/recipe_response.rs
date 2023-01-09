@@ -28,7 +28,7 @@ pub async fn create_recipe_post(
     let body = if let Ok(body) = response.text().await {
         body
     } else {
-        tracing::error!("Error parsing recipe");
+        tracing::warn!("Error parsing recipe");
         error(ctx, command, "Error parsing recipe".to_string()).await;
         return;
     };
