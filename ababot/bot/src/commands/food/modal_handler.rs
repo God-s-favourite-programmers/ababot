@@ -72,6 +72,16 @@ async fn create_response(
         error(ctx, command, "No recipies found".to_string()).await;
         return;
     };
+
+    if let Err(why) = command
+        .create_interaction_response(&ctx.http, |m| {
+            m.kind(InteractionResponseType::DeferredUpdateMessage)
+        })
+        .await
+    {
+        tracing::warn!("Failed to ACK message: {:?}", why);
+    }
+
     let channel_message =
         command
             .channel_id
