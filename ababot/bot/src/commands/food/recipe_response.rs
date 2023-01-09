@@ -92,7 +92,7 @@ pub async fn create_recipe_post(
         }
     };
 
-    let listener = channel_message.await_component_interaction(&ctx).await;
+    let listener = channel_message.await_component_interaction(ctx).await;
 
     if let Some(listener) = listener {
         if listener.data.custom_id == "publish" {
@@ -132,7 +132,7 @@ pub async fn create_recipe_post(
             .await
         {
             tracing::warn!("Error sending recipe message: {:?}", why);
-            return;
+            
         }
     }
 }
