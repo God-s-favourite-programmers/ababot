@@ -115,15 +115,11 @@ fn get_ingredients(body: &str) -> Result<Vec<Ingredient>, String> {
         for ingredient in iterator {
             temp.push(ingredient.text().collect::<Vec<_>>().join(" "));
         }
-        if temp.len() == 3
-            && !temp.get(0).unwrap().is_empty()
-            && !temp.get(1).unwrap().is_empty()
-            && !temp.get(2).unwrap().is_empty()
-        {
+        if temp.len() == 3 && !temp.iter().any(|s| s.is_empty()) {
             ingredients.push(Ingredient {
-                amount: temp.get(0).unwrap().to_string(),
-                unit: temp.get(1).unwrap().to_string(),
-                name: temp.get(2).unwrap().to_string(),
+                amount: temp[0].to_string(),
+                unit: temp[1].to_string(),
+                name: temp[2].to_string(),
             });
         } else {
             continue;
