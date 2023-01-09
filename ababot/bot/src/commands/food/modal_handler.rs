@@ -76,7 +76,7 @@ async fn create_response(
     };
 
     let channel_message =
-        command
+        match command
             .channel_id
             .send_message(&ctx.http, |m| {
                 m.content(
@@ -99,7 +99,14 @@ async fn create_response(
             }))
             })
             .await
-            .unwrap();
+        {
+            Ok(message) => message,
+            Err(why) => {
+                error(ctx, command, why.to_string()).await;
+                return;
+            }
+        };
+
     let listener = channel_message
         .await_component_interaction(ctx)
         .timeout(Duration::minutes(2).to_std().unwrap())
