@@ -60,7 +60,7 @@ pub async fn create_recipe_post(
     };
     let channel_message = match command
         .edit_original_interaction_response(&ctx.http, |m| {
-            m.content("­")
+            m.content("\u{AD}")
                 .embed(|e| {
                     e.title(name.clone())
                         .field("Fremgangsmåte", steps.clone(), false)
