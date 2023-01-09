@@ -59,8 +59,8 @@ pub async fn create_recipe_post(
         }
     };
     let channel_message = match command
-        .create_followup_message(&ctx.http, |m| {
-            m.embed(|e| {
+        .edit_original_interaction_response(&ctx.http, |m| {
+            m.content("­").embed(|e| {
                 e.title(name.clone())
                     .field("Fremgangsmåte", steps.clone(), false)
                     .field("Ingredienser", "\u{AD}", false) // Invisible character in value field to make discord happy
@@ -81,7 +81,6 @@ pub async fn create_recipe_post(
                     })
                 })
             })
-            .ephemeral(true)
         })
         .await
     {
@@ -132,7 +131,7 @@ pub async fn create_recipe_post(
             .await
         {
             tracing::warn!("Error sending recipe message: {:?}", why);
-            
+
         }
     }
 }

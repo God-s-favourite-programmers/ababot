@@ -121,12 +121,6 @@ async fn create_response(
             tracing::warn!("Error responding to modal: {:?}", why);
         }
 
-        if let Err(why) = interaction
-            .delete_original_interaction_response(&ctx.http)
-            .await
-        {
-            tracing::warn!("Failed to delete interaction: {:?}", why);
-        }
         (
             interaction.data.values.get(0).unwrap().as_str().to_string(),
             interaction,
