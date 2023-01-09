@@ -2,7 +2,11 @@ use std::sync::Arc;
 
 use scraper::{Html, Selector};
 use serenity::{
-    model::prelude::interaction::message_component::MessageComponentInteraction, prelude::Context,
+    model::prelude::{
+        component::ButtonStyle,
+        interaction::{message_component::MessageComponentInteraction, InteractionResponseType},
+    },
+    prelude::Context,
 };
 
 struct Ingredient {
@@ -54,12 +58,11 @@ pub async fn create_recipe_post(
             return;
         }
     };
-    if let Err(why) = command
-        .channel_id
-        .send_message(&ctx.http, |m| {
+    let channel_message = match command
+        .create_followup_message(&ctx.http, |m| {
             m.embed(|e| {
-                e.title(name)
-                    .field("Fremgangsmåte", steps, false)
+                e.title(name.clone())
+                    .field("Fremgangsmåte", steps.clone(), false)
                     .field("Ingredienser", "\u{AD}", false) // Invisible character in value field to make discord happy
                     .fields(ingredients.iter().map(|i| {
                         (
@@ -69,10 +72,68 @@ pub async fn create_recipe_post(
                         )
                     }))
             })
+            .components(|c| {
+                c.create_action_row(|row| {
+                    row.create_button(|b| {
+                        b.label("Publiser")
+                            .style(ButtonStyle::Success)
+                            .custom_id("publish")
+                    })
+                })
+            })
+            .ephemeral(true)
         })
         .await
     {
-        tracing::warn!("Error sending recipe: {:?}", why);
+        Ok(channel_message) => channel_message,
+        Err(why) => {
+            tracing::warn!("Error sending recipe message: {:?}", why);
+            return;
+        }
+    };
+
+    let listener = channel_message.await_component_interaction(&ctx).await;
+
+    if let Some(listener) = listener {
+        if listener.data.custom_id == "publish" {
+            if let Err(why) = listener
+                .create_interaction_response(&ctx.http, |r| {
+                    r.kind(InteractionResponseType::DeferredUpdateMessage)
+                })
+                .await
+            {
+                tracing::warn!("Error sending publish message: {:?}", why);
+                return;
+            }
+            if let Err(why) = listener
+                .delete_original_interaction_response(&ctx.http)
+                .await
+            {
+                tracing::warn!("Error sending publish message: {:?}", why);
+                return;
+            }
+        }
+        if let Err(why) = command
+            .channel_id
+            .send_message(&ctx.http, |m| {
+                m.embed(|e| {
+                    e.title(name.clone())
+                        .field("Fremgangsmåte", steps.clone(), false)
+                        .field("Ingredienser", "\u{AD}", false) // Invisible character in value field to make discord happy
+                        .fields(ingredients.iter().map(|i| {
+                            (
+                                i.name.clone(),
+                                format!("{} {}", i.amount.clone(), i.unit.clone()),
+                                true,
+                            )
+                        }))
+                })
+            })
+            .await
+        {
+            tracing::warn!("Error sending recipe message: {:?}", why);
+            return;
+        }
     }
 }
 

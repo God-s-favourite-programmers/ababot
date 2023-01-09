@@ -77,8 +77,7 @@ async fn create_response(
 
     let channel_message =
         match command
-            .channel_id
-            .send_message(&ctx.http, |m| {
+            .create_followup_message(&ctx.http, |m| {
                 m.content(
                 "Here are some recipies you can make with the ingredients you have in your fridge",
             )
@@ -90,13 +89,13 @@ async fn create_response(
                         recipe_sublist.iter().fold(opt, |opt, reci| {
                             opt.create_option(|o| {
                                 o.label(&reci.name)
-                                .value(&reci.url)
+                                .value(&reci.name)
                                 .description("Click to see the recipie")
                             })
                         })
                     })
                 })
-            }))
+            })).ephemeral(true)
             })
             .await
         {
@@ -113,12 +112,21 @@ async fn create_response(
         .await;
 
     let (selected_recipe, interaction) = if let Some(interaction) = listener {
-        interaction
+        if let Err(why) = interaction
             .create_interaction_response(&ctx.http, |m| {
                 m.kind(InteractionResponseType::DeferredUpdateMessage)
             })
             .await
-            .unwrap();
+        {
+            tracing::warn!("Error responding to modal: {:?}", why);
+        }
+
+        if let Err(why) = interaction
+            .delete_original_interaction_response(&ctx.http)
+            .await
+        {
+            tracing::warn!("Failed to delete interaction: {:?}", why);
+        }
         (
             interaction.data.values.get(0).unwrap().as_str().to_string(),
             interaction,
@@ -127,10 +135,18 @@ async fn create_response(
         error(ctx, command, "No recipie selected".to_string()).await;
         return;
     };
-    if let Err(why) = channel_message.delete(&ctx.http).await {
-        tracing::warn!("Failed to delete message: {:?}", why);
-    }
-    create_recipe_post(ctx, interaction, selected_recipe).await;
+
+    let selected_recipe = if let Some(recipe) = recipe_sublist
+        .into_iter()
+        .find(|reci| reci.name == selected_recipe)
+    {
+        recipe
+    } else {
+        error(ctx, command, "No recipie selected".to_string()).await;
+        return;
+    };
+
+    create_recipe_post(ctx, interaction, selected_recipe.url).await;
 }
 
 async fn get_recipes(url: &str) -> Result<Vec<Food>, String> {
