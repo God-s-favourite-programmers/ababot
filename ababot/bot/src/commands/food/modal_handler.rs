@@ -20,12 +20,14 @@ struct Food {
 }
 
 pub async fn handle_modal(ctx: &Context, command: &ModalSubmitInteraction) {
-    command
+    if let Err(why) = command
         .create_interaction_response(&ctx.http, |m| {
             m.kind(InteractionResponseType::DeferredUpdateMessage)
         })
         .await
-        .unwrap();
+    {
+        tracing::warn!("Error responding to modal: {:?}", why);
+    }
 
     let user_submitted_ingredients = &command
         .data
