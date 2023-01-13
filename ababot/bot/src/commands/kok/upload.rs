@@ -37,7 +37,7 @@ pub async fn save_small(
     }
 
     // File is small. Save the pdf
-    let mut path = String::from("kok/");
+    let mut path = String::from("/kok/");
     if name.ends_with(".pdf") {
         path.push_str(name);
     } else {
@@ -128,7 +128,7 @@ pub async fn save_big(ctx: &Context, command: &ModalSubmitInteraction) {
     }; // The actuall file
 
     // Create file
-    let mut file = if let Ok(file) = File::create(format!("kok/{}.pdf", name)).await {
+    let mut file = if let Ok(file) = File::create(format!("/kok/{}.pdf", name)).await {
         file
     } else {
         error(ctx, command).await;
