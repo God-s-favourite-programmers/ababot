@@ -29,7 +29,7 @@ pub async fn get(ctx: &Context, command: &ApplicationCommandInteraction, file_st
         return;
     }
 
-    let mut base = String::from("kok/");
+    let mut base = String::from("/kok/");
     if file_str.ends_with(".pdf") {
         base.push_str(file_str);
     } else {
